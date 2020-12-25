@@ -46,6 +46,8 @@
             this.chkIncludeUnusedLabels = new System.Windows.Forms.CheckBox();
             this.saveLogSingleFile = new System.Windows.Forms.SaveFileDialog();
             this.chooseLogFolder = new System.Windows.Forms.FolderBrowserDialog();
+            this.chkLowerCaseOpcodes = new System.Windows.Forms.CheckBox();
+            this.chkNewLineLabels = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -73,21 +75,25 @@
             // 
             // textFormat
             // 
+            this.textFormat.AcceptsReturn = true;
+            this.textFormat.AcceptsTab = true;
+            this.textFormat.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textFormat.Location = new System.Drawing.Point(88, 139);
+            this.textFormat.Multiline = true;
             this.textFormat.Name = "textFormat";
-            this.textFormat.Size = new System.Drawing.Size(512, 20);
+            this.textFormat.Size = new System.Drawing.Size(512, 52);
             this.textFormat.TabIndex = 8;
             this.textFormat.TextChanged += new System.EventHandler(this.textFormat_TextChanged);
             // 
             // textSample
             // 
             this.textSample.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textSample.Location = new System.Drawing.Point(88, 166);
+            this.textSample.Location = new System.Drawing.Point(88, 197);
             this.textSample.Multiline = true;
             this.textSample.Name = "textSample";
             this.textSample.ReadOnly = true;
             this.textSample.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textSample.Size = new System.Drawing.Size(512, 319);
+            this.textSample.Size = new System.Drawing.Size(512, 288);
             this.textSample.TabIndex = 10;
             this.textSample.TabStop = false;
             this.textSample.WordWrap = false;
@@ -129,7 +135,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(6, 169);
+            this.label2.Location = new System.Drawing.Point(6, 200);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(80, 13);
             this.label2.TabIndex = 9;
@@ -199,7 +205,7 @@
             this.chkPrintLabelSpecificComments.AutoSize = true;
             this.chkPrintLabelSpecificComments.Checked = true;
             this.chkPrintLabelSpecificComments.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkPrintLabelSpecificComments.Location = new System.Drawing.Point(376, 93);
+            this.chkPrintLabelSpecificComments.Location = new System.Drawing.Point(15, 96);
             this.chkPrintLabelSpecificComments.Name = "chkPrintLabelSpecificComments";
             this.chkPrintLabelSpecificComments.Size = new System.Drawing.Size(225, 17);
             this.chkPrintLabelSpecificComments.TabIndex = 13;
@@ -210,7 +216,7 @@
             // chkIncludeUnusedLabels
             // 
             this.chkIncludeUnusedLabels.AutoSize = true;
-            this.chkIncludeUnusedLabels.Location = new System.Drawing.Point(376, 115);
+            this.chkIncludeUnusedLabels.Location = new System.Drawing.Point(401, 96);
             this.chkIncludeUnusedLabels.Name = "chkIncludeUnusedLabels";
             this.chkIncludeUnusedLabels.Size = new System.Drawing.Size(192, 17);
             this.chkIncludeUnusedLabels.TabIndex = 14;
@@ -222,6 +228,28 @@
             // 
             this.saveLogSingleFile.Filter = "Assembly Files|*.asm|All Files|*.*";
             // 
+            // chkLowerCaseOpcodes
+            // 
+            this.chkLowerCaseOpcodes.AutoSize = true;
+            this.chkLowerCaseOpcodes.Location = new System.Drawing.Point(15, 116);
+            this.chkLowerCaseOpcodes.Name = "chkLowerCaseOpcodes";
+            this.chkLowerCaseOpcodes.Size = new System.Drawing.Size(164, 17);
+            this.chkLowerCaseOpcodes.TabIndex = 15;
+            this.chkLowerCaseOpcodes.Text = "Output opcodes in lowercase";
+            this.chkLowerCaseOpcodes.UseVisualStyleBackColor = true;
+            this.chkLowerCaseOpcodes.CheckedChanged += new System.EventHandler(this.chkLowerCaseOpcodes_CheckedChanged);
+            // 
+            // chkNewLineLabels
+            // 
+            this.chkNewLineLabels.AutoSize = true;
+            this.chkNewLineLabels.Location = new System.Drawing.Point(401, 116);
+            this.chkNewLineLabels.Name = "chkNewLineLabels";
+            this.chkNewLineLabels.Size = new System.Drawing.Size(184, 17);
+            this.chkNewLineLabels.TabIndex = 16;
+            this.chkNewLineLabels.Text = "Insert a new line after code labels";
+            this.chkNewLineLabels.UseVisualStyleBackColor = true;
+            this.chkNewLineLabels.CheckedChanged += new System.EventHandler(this.chkNewLineLabels_CheckedChanged);
+            // 
             // ExportDisassembly
             // 
             this.AcceptButton = this.button2;
@@ -229,6 +257,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
             this.ClientSize = new System.Drawing.Size(611, 525);
+            this.Controls.Add(this.chkNewLineLabels);
+            this.Controls.Add(this.chkLowerCaseOpcodes);
             this.Controls.Add(this.chkIncludeUnusedLabels);
             this.Controls.Add(this.chkPrintLabelSpecificComments);
             this.Controls.Add(this.numData);
@@ -274,5 +304,7 @@
         private System.Windows.Forms.CheckBox chkIncludeUnusedLabels;
         private System.Windows.Forms.SaveFileDialog saveLogSingleFile;
         private System.Windows.Forms.FolderBrowserDialog chooseLogFolder;
+        private System.Windows.Forms.CheckBox chkLowerCaseOpcodes;
+        private System.Windows.Forms.CheckBox chkNewLineLabels;
     }
 }

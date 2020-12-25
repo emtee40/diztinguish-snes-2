@@ -14,6 +14,8 @@ namespace Diz.Core.export
         public LogCreator.FormatStructure Structure;
         public bool IncludeUnusedLabels;
         public bool PrintLabelSpecificComments;
+        public bool LowerCaseOpcodes;
+        public bool NewLineLabels;
 
         public bool WasInitialized;
         public int RomSizeOverride; // specify an override for the # of bytes to assemble. default is the entire ROM
@@ -30,6 +32,8 @@ namespace Diz.Core.export
             Structure = LogCreator.FormatStructure.OneBankPerFile;
             IncludeUnusedLabels = false;
             PrintLabelSpecificComments = false;
+            LowerCaseOpcodes = false;
+            NewLineLabels = false;
             FileOrFolderOutPath = ""; // path to output file or folder
             WasInitialized = true;
             RomSizeOverride = -1;

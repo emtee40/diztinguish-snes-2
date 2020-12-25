@@ -49,6 +49,8 @@ namespace DiztinGUIsh
             comboStructure.SelectedIndex = (int)settings.Structure;
             chkIncludeUnusedLabels.Checked = settings.IncludeUnusedLabels;
             chkPrintLabelSpecificComments.Checked = settings.PrintLabelSpecificComments;
+            chkLowerCaseOpcodes.Checked = settings.LowerCaseOpcodes;
+            chkNewLineLabels.Checked = settings.NewLineLabels;
         }
 
         private void cancel_Click(object sender, EventArgs e)
@@ -146,6 +148,19 @@ namespace DiztinGUIsh
         private void chkIncludeUnusedLabels_CheckedChanged(object sender, EventArgs e)
         {
             settings.IncludeUnusedLabels = chkIncludeUnusedLabels.Checked;
+        }
+
+        private void chkLowerCaseOpcodes_CheckedChanged(object sender, EventArgs e)
+        {
+            settings.LowerCaseOpcodes = chkLowerCaseOpcodes.Checked;
+            RegenerateSampleOutput();
+        }
+
+        private void chkNewLineLabels_CheckedChanged(object sender, EventArgs e)
+        {
+            settings.NewLineLabels = chkNewLineLabels.Checked;
+            RegenerateSampleOutput();
+
         }
     }
 }

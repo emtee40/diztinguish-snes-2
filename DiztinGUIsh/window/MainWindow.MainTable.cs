@@ -167,7 +167,7 @@ namespace DiztinGUIsh.window
                     break;
                 case 5:
                     var len = Project.Data.GetInstructionLength(row);
-                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row) : "";
+                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, false) : "";
                     break;
                 case 6:
                     var ia = Project.Data.GetIntermediateAddressOrPointer(row);

@@ -397,7 +397,7 @@ namespace Diz.Core.export
                     max = Settings.DataPerLine;
                     break;
                 case Data.FlagType.Text:
-                    max = 21;
+                    //max = 21;
                     break;
                 case Data.FlagType.Data16Bit:
                     step = 2;
@@ -452,7 +452,7 @@ namespace Diz.Core.export
 
         // trim to length
         // negative length = right justified
-        [AssemblerHandler(Token = "label", Length = -22)]
+        [AssemblerHandler(Token = "label", Length = 0)]
         protected string GetLabel(int offset, int length)
         {
             // what we're given: a PC offset in ROM.
@@ -472,7 +472,7 @@ namespace Diz.Core.export
             LabelsWeVisited.Add(snesOffset);
 
             var noColon = label.Length == 0 || label[0] == '-' || label[0] == '+';
-            return string.Format("{0," + (length * -1) + "}", label + (noColon ? "" : ":"));
+            return string.Format("{0," + (length * -1) + "}", label + (noColon ? "" : ":")) + (!noColon && Settings.NewLineLabels ? string.Format("\r\n{0," + (length * -1) + "}", "") : "");
         }
 
         // trim to length
@@ -485,7 +485,7 @@ namespace Diz.Core.export
             switch (Data.GetFlag(offset))
             {
                 case Data.FlagType.Opcode:
-                    code = Data.GetInstruction(offset);
+                    code = Data.GetInstruction(offset, Settings.LowerCaseOpcodes);
                     break;
                 case Data.FlagType.Unreached:
                 case Data.FlagType.Operand:
@@ -607,7 +607,9 @@ namespace Diz.Core.export
         protected string GetComment(int offset, int length)
         {
             var snesOffset = Data.ConvertPCtoSnes(offset);
-            return string.Format("{0," + (length * -1) + "}", Data.GetComment(snesOffset));
+            String comment = Data.GetComment(snesOffset);
+            
+            return string.Format("{0," + (length * -1) + "}", (comment == "" ? "" : "; " + comment));
         }
 
         // length forced to 2

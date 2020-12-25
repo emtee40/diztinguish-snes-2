@@ -1,14 +1,17 @@
 ﻿using Diz.Core.model;
 using Diz.Core.util;
+using System.Collections.Generic;
 
 namespace Diz.Core.arch
 {
     public class Cpu65C816
     {
+        private Stack<int> stack;
         private readonly Data data;
         public Cpu65C816(Data data)
         {
             this.data = data;
+            this.stack = new Stack<int>();
         }
         public int Step(int offset, bool branch, bool force, int prevOffset)
         {
@@ -24,6 +27,12 @@ namespace Diz.Core.arch
                 prevDataBank = data.GetDataBank(prevOffset);
                 prevX = data.GetXFlag(prevOffset);
                 prevM = data.GetMFlag(prevOffset);
+            }
+
+            if ((opcode == 0x6B || opcode == 0x60) && stack.Count > 0) // RTS RTL
+            {
+                int lastOffset = stack.Pop();
+                return Step(lastOffset, false, false, lastOffset - 1);
             }
 
             if (opcode == 0xC2 || opcode == 0xE2) // REP SEP
@@ -72,8 +81,13 @@ namespace Diz.Core.arch
                 return nextOffset;
 
             var iaNextOffsetPc = data.ConvertSnesToPc(GetIntermediateAddress(offset, true));
-            if (iaNextOffsetPc >= 0) 
+            if (iaNextOffsetPc >= 0)
+            {
+                if (opcode == 0x20 || opcode == 0x22 || opcode == 0xFC)
+                    stack.Push(offset);
+
                 nextOffset = iaNextOffsetPc;
+            }
 
             return nextOffset;
         }
@@ -140,11 +154,12 @@ namespace Diz.Core.arch
             return -1;
         }
 
-        public string GetInstruction(int offset)
+        public string GetInstruction(int offset, bool lowercase)
         {
             AddressMode mode = GetAddressMode(offset);
             string format = GetInstructionFormatString(offset);
             string mnemonic = GetMnemonic(offset);
+            if(lowercase) mnemonic = mnemonic.ToLower();
             string op1, op2 = "";
             if (mode == AddressMode.BlockMove)
             {

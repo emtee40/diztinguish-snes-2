@@ -152,7 +152,7 @@ namespace DiztinGUIsh.window
             var snesOffset = FindIntermediateAddress(offset);
             if (snesOffset == -1)
                 return;
-            
+
             SelectOffset(snesOffset, 1);
         }
 

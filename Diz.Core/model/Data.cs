@@ -523,11 +523,11 @@ namespace Diz.Core.model
             };
         }
 
-        public string GetInstruction(int offset)
+        public string GetInstruction(int offset, bool lowercase)
         {
             return GetArchitecture(offset) switch
             {
-                Architecture.Cpu65C816 => cpu65C816.GetInstruction(offset),
+                Architecture.Cpu65C816 => cpu65C816.GetInstruction(offset, lowercase),
                 Architecture.Apuspc700 => "",
                 Architecture.GpuSuperFx => "",
                 _ => ""
