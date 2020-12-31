@@ -133,7 +133,7 @@ namespace DiztinGUIsh.window
         {
             // refactor this somewhere else
             UpdateUI_Tmp3();
-            InvalidateTable();
+            //InvalidateTable();
         }
 
         private void UpdateUI_Tmp3()
@@ -141,6 +141,7 @@ namespace DiztinGUIsh.window
             // refactor this somewhere else
             UpdatePercent();
             UpdateWindowTitle();
+            InvalidateTable();
         }
     }
 }

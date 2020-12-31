@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
@@ -16,6 +17,9 @@ namespace DiztinGUIsh.window
 
         private int rowsToShow;
         private bool moveWithStep = true;
+
+        public List<int> history = new List<int>();
+        public int history_index = 0;
 
         public void InvalidateTable() => table.Invalidate();
 
@@ -114,6 +118,7 @@ namespace DiztinGUIsh.window
                     GoToUnreached(false, true);
                     break;
                 case Keys.K:
+                    if(table.SelectedCells.Count > 0)
                     Mark(offset);
                     break;
                 case Keys.L:
@@ -138,6 +143,17 @@ namespace DiztinGUIsh.window
                     table.CurrentCell = table.Rows[table.CurrentCell.RowIndex].Cells[12];
                     table.BeginEdit(true);
                     break;
+                case Keys.OemMinus:
+                case Keys.Subtract:
+                    if(history_index-1 > 0 && history.Count > 0)
+                        SelectOffset(history[--history_index], -1, false);
+                    break;
+                case Keys.Oemplus:
+                case Keys.Add:
+                    if (history_index+1 < history.Count)
+                        SelectOffset(history[++history_index], -1, false);
+                    break;
+
             }
 
             e.Handled = true;
@@ -167,7 +183,7 @@ namespace DiztinGUIsh.window
                     break;
                 case 5:
                     var len = Project.Data.GetInstructionLength(row);
-                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, false) : "";
+                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, true) : "";
                     break;
                 case 6:
                     var ia = Project.Data.GetIntermediateAddressOrPointer(row);
@@ -230,6 +246,7 @@ namespace DiztinGUIsh.window
             // editable cells show up green
             if (column == 0 || column == 8 || column == 9 || column == 12) style.SelectionBackColor = Color.Chartreuse;
 
+            bool diff = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(offset)) == "" && (offset > 0 && Project.Data.GetFlag(offset-1) == Project.Data.GetFlag(offset));
             switch (Project.Data.GetFlag(offset))
             {
                 case Data.FlagType.Unreached:
@@ -290,14 +307,17 @@ namespace DiztinGUIsh.window
                 case Data.FlagType.Data24Bit:
                 case Data.FlagType.Data32Bit:
                     style.BackColor = Color.NavajoWhite;
+                    if (diff) style.ForeColor = Color.DarkGray;
                     break;
                 case Data.FlagType.Pointer16Bit:
                 case Data.FlagType.Pointer24Bit:
                 case Data.FlagType.Pointer32Bit:
                     style.BackColor = Color.Orchid;
+                    //if (diff) style.ForeColor = Color.LightGray;
                     break;
                 case Data.FlagType.Text:
                     style.BackColor = Color.Aquamarine;
+                    if (diff) style.ForeColor = Color.DarkGray;
                     break;
                 case Data.FlagType.Empty:
                     style.BackColor = Color.DarkSlateGray;
@@ -326,8 +346,16 @@ namespace DiztinGUIsh.window
             PaintCell(row, e.CellStyle, e.ColumnIndex, table.CurrentCell.RowIndex + ViewOffset);
         }
 
-        public void SelectOffset(int offset, int column = -1)
+        public void SelectOffset(int offset, int column = -1, bool record = true)
         {
+            if (record)
+            {
+                if (history.Count > 100) history.RemoveAt(0);
+                if (history_index < history.Count) history.RemoveRange(history_index, history.Count - history_index);
+                history.Add(SelectedOffset);
+                history_index++;
+            }
+
             var col = column == -1 ? table.CurrentCell.ColumnIndex : column;
             if (offset < ViewOffset)
             {

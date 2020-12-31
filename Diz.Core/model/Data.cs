@@ -26,7 +26,7 @@ namespace Diz.Core.model
         public void CreateRomBytesFromRom(IEnumerable<byte> actualRomBytes)
         {
             Debug.Assert(RomBytes.Count == 0);
-            
+
             var previousNotificationState = RomBytes.SendNotificationChangedEvents;
             RomBytes.SendNotificationChangedEvents = false;
 
@@ -65,7 +65,7 @@ namespace Diz.Core.model
         {
             var previousNotificationState = RomBytes.SendNotificationChangedEvents;
             RomBytes.SendNotificationChangedEvents = false;
-            
+
             var i = 0;
             foreach (var b in trueRomBytes)
             {
@@ -104,14 +104,14 @@ namespace Diz.Core.model
         }
         public string GetLabelName(int i)
         {
-            if (Labels.TryGetValue(i, out var val)) 
+            if (Labels.TryGetValue(i, out var val))
                 return val?.Name ?? "";
 
             return "";
         }
         public string GetLabelComment(int i)
         {
-            if (Labels.TryGetValue(i, out var val)) 
+            if (Labels.TryGetValue(i, out var val))
                 return val?.Comment ?? "";
 
             return "";
@@ -227,8 +227,9 @@ namespace Diz.Core.model
             return RomUtil.UnmirroredOffset(offset, GetRomSize());
         }
 
-        public string GetFormattedBytes(int offset, int step, int bytes)
+        public string GetFormattedBytes(int offset, int step, int bytes = 0)
         {
+            if (bytes == 0) bytes = GetSectionSize(offset);
             var res = step switch
             {
                 1 => "db ",
@@ -287,12 +288,34 @@ namespace Diz.Core.model
             if (pc >= 0 && GetLabelName(ia) != "") param = GetLabelName(ia);
             return string.Format(format, param);
         }
-
-        public string GetFormattedText(int offset, int bytes)
+        public int GetSectionSize(int offset)
         {
-            var text = "db \"";
-            for (var i = 0; i < bytes; i++) text += (char)GetRomByte(offset + i);
-            return text + "\"";
+            int bytes = 1;
+            while (GetFlag(offset + bytes) == GetFlag(offset) && GetLabelName(ConvertPCtoSnes(offset + bytes)) == "")
+                bytes++;
+            return bytes;
+        }
+
+        public string GetFormattedText(int offset, int bytes = 0)
+        {
+            List<string> texts = new List<string>();
+            if (bytes == 0) bytes = GetSectionSize(offset);
+
+            int byt = 0; var text = "";
+            for (var i = 0; i < bytes; i++)
+            {
+                byt = GetRomByte(offset + i);
+                if (byt < 0x20 || byt > 0x80)
+                {
+                    if(text != "") texts.Add($"\"{ text }\""); text = "";
+                    texts.Add(Util.NumberToBaseString(byt, Util.NumberBase.Hexadecimal, 2, true));                    
+                } else {
+                   text += (char) byt;
+                }
+
+            }
+            if (text != "") texts.Add($"\"{ text }\"");
+            return "db " + String.Join(", ", texts.ToArray());
         }
 
         public string GetDefaultLabel(int snes)

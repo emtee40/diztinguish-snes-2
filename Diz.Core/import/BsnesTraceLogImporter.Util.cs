@@ -1,5 +1,6 @@
 ﻿using Diz.Core.model;
 using Diz.Core.util;
+using static Diz.Core.import.BsnesImportStreamProcessor;
 
 namespace Diz.Core.import
 {
@@ -25,6 +26,7 @@ namespace Diz.Core.import
         private void UpdatePCAddress(ModificationData modData)
         {
             modData.Pc = ConvertSnesToPc(modData.SnesAddress);
+            modData.IAPc = ConvertSnesToPc(modData.IndirectAddress);
         }
     }
 }

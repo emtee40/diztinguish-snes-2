@@ -1,4 +1,5 @@
 ﻿using Diz.Core.model;
+using static Diz.Core.import.BsnesImportStreamProcessor;
 
 namespace Diz.Core.import
 {
@@ -15,8 +16,11 @@ namespace Diz.Core.import
         public class ModificationData : PoolItem
         {
             // imported data from trace log
+            public FormatType Format;
             public int SnesAddress;
+            public int IndirectAddress;
             public int Pc;
+            public int IAPc;
             public Data.FlagType FlagType;
             public int DataBank;
             public int DirectPage;
@@ -37,6 +41,8 @@ namespace Diz.Core.import
                 mM = romByte.MFlag != MFlagSet;
 
                 changed = mMarks || mDb || mDp || mX || mM;
+
+                if (romByte.TypeFlag != Data.FlagType.Unreached) changed = false;                
             }
 
             // precondition: rombyte (minimum of) read lock already acquired

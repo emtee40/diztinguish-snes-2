@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using Diz.Core.util;
+using static Diz.Core.import.BsnesImportStreamProcessor;
 
 namespace Diz.Core.import
 {
@@ -35,10 +36,10 @@ namespace Diz.Core.import
         
         // this function will be called from multiple threads concurrently and MUST REMAIN thread-safe.
         // for performance-reasons, we're handling our own locking.
-        public void ImportTraceLogLineBinary(byte[] bytes, bool abridgedFormat = true)
+        public void ImportTraceLogLineBinary(byte[] bytes, FormatType format = FormatType.Abridged)
         {
             var modData = AllocateModificationData();
-            ParseBinary(bytes, abridgedFormat, out var opcodeLen, modData);
+            ParseBinary(bytes, format, out var opcodeLen, modData);
             
             UpdatePCAddress(modData);
             SetOpcodeAndOperandsFromTraceData(modData, opcodeLen);  // note: frees modData, don't use after
@@ -68,21 +69,21 @@ namespace Diz.Core.import
             return true;
         }
 
-        private static void ParseBinary(byte[] bytes, bool abridgedFormat, out byte opcodeLen, ModificationData modData)
+        private static void ParseBinary(byte[] bytes, FormatType format, out byte opcodeLen, ModificationData modData)
         {
             // file format info from the BSNES side:
             // https://github.com/binary1230/bsnes-plus/blob/e30dfc784f3c40c0db0a09124db4ec83189c575c/bsnes/snes/cpu/core/disassembler/disassembler.cpp#L224
             
             // extremely performance-intensive function. be really careful when adding stuff
-            if (abridgedFormat)
+            if (format == FormatType.Full)
             {
-                if (bytes.Length != 8)
-                    throw new InvalidDataException("Non-abridged trace data length must be 8 bytes");
+                if (bytes.Length != 24)
+                    throw new InvalidDataException("Non-abridged trace data length must be 24 bytes");
             }
             else
             {
-                if (bytes.Length != 21)
-                    throw new InvalidDataException("Non-abridged trace data length must be 21 bytes");
+                if (bytes.Length != 11)
+                    throw new InvalidDataException("Non-abridged trace data length must be 11 bytes");
             }
 
             var currentIndex = 0;
@@ -112,7 +113,7 @@ namespace Diz.Core.import
             modData.XFlagSet = (flags & 0x10) != 0;
             modData.MFlagSet = (flags & 0x20) != 0;
 
-            if (!abridgedFormat)
+            if (format == FormatType.Full)
             {
                 // skip opcodes. NOTE: must read all 5 bytes but only use up to 'opcode_len' bytes 
                 //var op  = bytes[currentIndex++];
@@ -137,6 +138,10 @@ namespace Diz.Core.import
                 // skip E(emu) flag <-- NOTE: we might... want this someday.
                 currentIndex += 1;
             }
+
+            modData.Format = format;
+            modData.IndirectAddress = ByteUtil.ByteArrayToInt24(bytes, currentIndex);
+            currentIndex += 3;
 
             Debug.Assert(currentIndex == bytes.Length);
         }

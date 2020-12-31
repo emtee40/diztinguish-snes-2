@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Diz.Core.model;
 using Diz.Core.util;
 using IX.Observable;
@@ -384,20 +385,23 @@ namespace Diz.Core.export
             int max = 1, step = 1;
             var size = Data.GetRomSize();
 
-            switch (Data.GetFlag(offset))
+            Data.FlagType flag = Data.GetFlag(offset);
+            switch (flag)
             {
                 case Data.FlagType.Opcode:
                     return Data.OpcodeByteLength(offset);
                 case Data.FlagType.Unreached:
                 case Data.FlagType.Operand:
                 case Data.FlagType.Data8Bit:
-                case Data.FlagType.Graphics:
-                case Data.FlagType.Music:
                 case Data.FlagType.Empty:
                     max = Settings.DataPerLine;
                     break;
+                case Data.FlagType.Graphics:
+                case Data.FlagType.Music:
+                    max = 0xFFFF;
+                    break;
                 case Data.FlagType.Text:
-                    //max = 21;
+                    max = 0xFFFF;
                     break;
                 case Data.FlagType.Data16Bit:
                     step = 2;
@@ -481,8 +485,9 @@ namespace Diz.Core.export
         {
             var bytes = GetLineByteLength(offset);
             string code = "";
+            Data.FlagType flag = Data.GetFlag(offset);
 
-            switch (Data.GetFlag(offset))
+            switch (flag)
             {
                 case Data.FlagType.Opcode:
                     code = Data.GetInstruction(offset, Settings.LowerCaseOpcodes);
@@ -490,10 +495,26 @@ namespace Diz.Core.export
                 case Data.FlagType.Unreached:
                 case Data.FlagType.Operand:
                 case Data.FlagType.Data8Bit:
-                case Data.FlagType.Graphics:
-                case Data.FlagType.Music:
                 case Data.FlagType.Empty:
                     code = Data.GetFormattedBytes(offset, 1, bytes);
+                    break;
+                case Data.FlagType.Graphics:
+                case Data.FlagType.Music:
+                    string label = Data.GetLabelName(Data.ConvertPCtoSnes(offset));
+                    if (label == "")
+                    {
+                        label = "data_" + Util.NumberToBaseString(Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6, false);
+                    }
+
+                    code = $"incbin {label}.bin";
+                    var file = new FileStream(Output.BuildStreamPath($"{label}.bin"), FileMode.Create, FileAccess.Write);
+                    while (bytes > 0)
+                    {
+                        file.WriteByte((byte) Data.GetRomByte(offset));
+                        bytes--;
+                        offset++;
+                    }
+                    file.Close();
                     break;
                 case Data.FlagType.Data16Bit:
                     code = Data.GetFormattedBytes(offset, 2, bytes);
@@ -524,8 +545,7 @@ namespace Diz.Core.export
         [AssemblerHandler(Token = "%org", Length = 37)]
         protected string GetOrg(int offset, int length)
         {
-            string org = "ORG " + Util.NumberToBaseString(Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6, true);
-            return string.Format("{0," + (length * -1) + "}", org);
+            return "org " + Util.NumberToBaseString(Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6, true);
         }
 
         [AssemblerHandler(Token = "%map", Length = 37)]
@@ -542,7 +562,7 @@ namespace Diz.Core.export
                 case RomMapMode.ExHiRom: s = "exhirom"; break;
                 case RomMapMode.ExLoRom: s = "exlorom"; break;
             }
-            return string.Format("{0," + (length * -1) + "}", s);
+            return s;
         }
 
         // 0+ = bank_xx.asm, -1 = labels.asm

@@ -22,6 +22,7 @@ namespace Diz.Core.export
         public virtual void SwitchToStream(string streamName, bool isErrorStream = false) { }
         public abstract void WriteLine(string line);
         public abstract void WriteErrorLine(string line);
+        public virtual string BuildStreamPath(string streamName) { return ""; }
     }
 
     public class LogCreatorStringOutput : LogCreatorOutput
@@ -132,7 +133,7 @@ namespace Diz.Core.export
             return streamWriter;
         }
 
-        private string BuildStreamPath(string streamName)
+        public override string BuildStreamPath(string streamName)
         {
             var fullOutputPath = Path.Combine(Folder, streamName);
 

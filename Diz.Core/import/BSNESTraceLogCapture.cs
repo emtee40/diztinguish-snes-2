@@ -337,7 +337,7 @@ namespace Diz.Core.import
             #endif
 
             // this importer call is thread-safe, so we don't need to do our own locking 
-            importer.ImportTraceLogLineBinary(workItem.Buffer, workItem.AbridgedFormat);
+            importer.ImportTraceLogLineBinary(workItem.Buffer, workItem.Format);
 
 #if PROFILING
             mainSpan.Leave();

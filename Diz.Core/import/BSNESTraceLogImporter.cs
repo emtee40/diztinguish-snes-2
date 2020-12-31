@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using Diz.Core.model;
 using Diz.Core.util;
+using Diz.Core.arch;
+using static Diz.Core.import.BsnesImportStreamProcessor;
 
 namespace Diz.Core.import
 {
@@ -29,26 +31,47 @@ namespace Diz.Core.import
             // extremely performance-intensive function. be really careful when adding stuff
             var currentOffset = 0;
             var numBytesAnalyzed = 0;
-            
+
             bool Prep(ModificationData modData)
             {
-                numBytesAnalyzed++;
                 UpdatePCAddress(modData);
+                modData.FlagType = GetFlagForInstructionPosition(currentOffset);
+
+                if (modData.Format == FormatType.ReadLog)
+                {
+                    if (modData.IAPc < 0) return false;
+
+                    modData.FlagType = modData.MFlagSet ? Data.FlagType.Data8Bit : Data.FlagType.Data16Bit;
+
+                    if (modData.Pc > 0)
+                    switch (data.GetRomByte(modData.Pc))
+                    {
+                        case 0x6C: case 0x7C: case 0xFC:
+                            modData.FlagType = Data.FlagType.Pointer16Bit;
+                            break;
+                        case 0xDC:
+                            modData.FlagType = Data.FlagType.Pointer32Bit;
+                            break;
+                    }
+
+                    modData.Pc = modData.IAPc;
+                    modData.SnesAddress = modData.IndirectAddress;
+                    instructionByteLen = 1;
+                }
+
                 if (!IsOkToSetThisRomByte(modData.Pc, instructionByteLen, currentOffset)) 
                     return false;
-                
-                modData.FlagType = GetFlagForInstructionPosition(currentOffset);
+
                 return true;
             }
 
             while (Prep(modData))
             {
                 ApplyModification(modData);
-
                 modData.SnesAddress = GetNextSNESAddress(modData.SnesAddress);
                 currentOffset++;
             }
-            
+                
             FreeModificationData(ref modData); // sets to Null after called
 
             currentStats.NumRomBytesAnalyzed += numBytesAnalyzed;

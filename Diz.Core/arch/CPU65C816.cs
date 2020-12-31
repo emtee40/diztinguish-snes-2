@@ -77,7 +77,7 @@ namespace Diz.Core.arch
             if (force || (opcode != 0x4C && opcode != 0x5C && opcode != 0x80 && opcode != 0x82 && (!branch ||
                 (opcode != 0x10 && opcode != 0x30 && opcode != 0x50 && opcode != 0x70 && opcode != 0x90 &&
                  opcode != 0xB0 && opcode != 0xD0 && opcode != 0xF0 && opcode != 0x20 &&
-                 opcode != 0x22)))) 
+                 opcode != 0x22 && opcode != 0xFC)))) 
                 return nextOffset;
 
             var iaNextOffsetPc = data.ConvertSnesToPc(GetIntermediateAddress(offset, true));
@@ -85,6 +85,11 @@ namespace Diz.Core.arch
             {
                 if (opcode == 0x20 || opcode == 0x22 || opcode == 0xFC)
                     stack.Push(offset);
+                if (opcode == 0xFC)
+                {
+                    data.MarkTypeFlag(iaNextOffsetPc, Data.FlagType.Pointer16Bit, RomUtil.GetByteLengthForFlag(Data.FlagType.Pointer16Bit));
+                    iaNextOffsetPc = data.ConvertSnesToPc(data.GetIntermediateAddressOrPointer(iaNextOffsetPc));
+                }
 
                 nextOffset = iaNextOffsetPc;
             }
@@ -93,7 +98,7 @@ namespace Diz.Core.arch
         }
 
         // input: ROM offset
-        // return: a SNES address
+        // return: a SNES address   
         public int GetIntermediateAddress(int offset, bool resolve)
         {
             int bank, directPage, operand, programCounter;
@@ -159,7 +164,8 @@ namespace Diz.Core.arch
             AddressMode mode = GetAddressMode(offset);
             string format = GetInstructionFormatString(offset);
             string mnemonic = GetMnemonic(offset);
-            if(lowercase) mnemonic = mnemonic.ToLower();
+            Data.FlagType flag = data.GetFlag(offset);
+            if (lowercase) mnemonic = mnemonic.ToLower();
             string op1, op2 = "";
             if (mode == AddressMode.BlockMove)
             {
@@ -180,6 +186,27 @@ namespace Diz.Core.arch
                 // we could substitute our expression of "$#F000 + $#01" or "some_struct.member" like "player.hp"
                 // the expression must be verified to always match the bytes in the file [unless we allow overriding]
                 op1 = FormatOperandAddress(offset, mode);
+            }
+            if(offset == 0 || data.GetFlag(offset - 1) != flag || data.GetLabelName(data.ConvertPCtoSnes(offset)) != "" ||
+                flag == Data.FlagType.Pointer16Bit || flag == Data.FlagType.Pointer24Bit || flag == Data.FlagType.Pointer32Bit)
+            switch (flag)
+            {
+                case Data.FlagType.Data8Bit:
+                    return data.GetFormattedBytes(offset, 1, 0);
+                case Data.FlagType.Data16Bit:
+                    return data.GetFormattedBytes(offset, 2, 0);
+                case Data.FlagType.Data24Bit:
+                    return data.GetFormattedBytes(offset, 3, 0);
+                case Data.FlagType.Data32Bit:
+                    return data.GetFormattedBytes(offset, 4, 0);
+                case Data.FlagType.Pointer16Bit:
+                    return data.GetPointer(offset, 2);
+                case Data.FlagType.Pointer24Bit:
+                    return data.GetPointer(offset, 3);
+                case Data.FlagType.Pointer32Bit:
+                    return data.GetPointer(offset, 4);
+                case Data.FlagType.Text:
+                    return data.GetFormattedText(offset, 0);
             }
             return string.Format(format, mnemonic, op1, op2);
         }
@@ -263,10 +290,12 @@ namespace Diz.Core.arch
 
         private string FormatOperandAddress(int offset, AddressMode mode)
         {
-            int address = data.GetIntermediateAddress(offset);
+            int address = data.GetIntermediateAddress(offset, true);
             if (address < 0) 
                 return "";
 
+            int ram_address = (address & 0x00ffff);
+            address = ram_address < 0x8000 && (address >> 16) < 0x7e ? ram_address : address;
             var label = data.GetLabelName(address);
             if (label != "") 
                 return label;
@@ -277,7 +306,7 @@ namespace Diz.Core.arch
             return Util.NumberToBaseString(address, Util.NumberBase.Hexadecimal, 2 * count, true);
         }
 
-        private string GetMnemonic(int offset, bool showHint = true)
+        public string GetMnemonic(int offset, bool showHint = true)
         {
             var mn = Mnemonics[data.GetRomByte(offset)];
             if (!showHint) 

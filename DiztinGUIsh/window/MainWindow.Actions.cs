@@ -67,7 +67,7 @@ namespace DiztinGUIsh.window
                 return;
             
             ProjectController.MarkChanged();
-            SelectOffset(Project.Data.Step(offset, true, false, offset - 1));
+            SelectOffset(Project.Data.Step(offset, true, false, history.Count > 0 ? history[history_index - 1] : offset - 1));
             UpdateUI_Tmp3();
         }
 
@@ -219,6 +219,7 @@ namespace DiztinGUIsh.window
         {
             markFlag = flagType;
             UpdateMarkerLabel();
+            if (autoMarkToolStripMenuItem.Checked) Mark(SelectedOffset);
         }
 
         private void ToggleMoveWithStep()

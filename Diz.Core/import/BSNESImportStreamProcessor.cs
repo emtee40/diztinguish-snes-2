@@ -57,6 +57,15 @@ namespace Diz.Core.import
 
     public class BsnesImportStreamProcessor
     {
+
+
+        public enum FormatType : byte
+        {
+            ReadLog = 0xED,
+            Abridged = 0xEE,
+            Full = 0xEF
+        }
+
         public class CompressedWorkItem : PoolItem
         {
             public byte[] Header;
@@ -76,7 +85,7 @@ namespace Diz.Core.import
         public class WorkItem : PoolItem
         {
             public byte[] Buffer;
-            public bool AbridgedFormat;
+            public FormatType Format;
             public WorkItem next;
         }
 
@@ -254,7 +263,7 @@ namespace Diz.Core.import
                 Debugger.Break();
             }
 
-            workItem.AbridgedFormat = false;
+            workItem.Format = FormatType.Abridged;
 
             // almost every item re-used from the pool should have the correct buffer size already.
             // this size is usually fixed, so ok to check for exact len.
@@ -313,12 +322,10 @@ namespace Diz.Core.import
         {
             var workItem = AllocateWorkItem(workItemLen);
 
-            if (workItemId != 0xEE && workItemId != 0xEF)
+            if (workItemId < 0xED || workItemId > 0xEF )
                 throw new InvalidDataException("Missing expected watermark from unzipped data");
 
-            var abridgedFormat = workItemId == 0xEE;
-
-            workItem.AbridgedFormat = abridgedFormat;
+            workItem.Format = (FormatType) workItemId;
 
             var bytesRead = stream.Read(workItem.Buffer, 0, workItem.Buffer.Length);
 
