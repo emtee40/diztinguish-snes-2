@@ -21,10 +21,6 @@ namespace DiztinGUIsh.window
 
         private void UpdatePanels()
         {
-            table.Height = this.Height - 85;
-            table.Width = this.Width - 33;
-            vScrollBar1.Height = this.Height - 85;
-            vScrollBar1.Left = this.Width - 33;
             if (WindowState == FormWindowState.Maximized) UpdateDataGridView();
         }
 
@@ -46,6 +42,8 @@ namespace DiztinGUIsh.window
                 toolStripOpenLast.Text += $" ({Path.GetFileNameWithoutExtension(Settings.Default.LastOpenedFile)})";
 
             openLastProjectAutomaticallyToolStripMenuItem.Checked = Settings.Default.OpenLastFileAutomatically;
+            moveWithStepToolStripMenuItem.Checked = Settings.Default.MoveWithStep;
+            findReferencesWithStepToolStripMenuItem.Checked = Settings.Default.FindReferencesWithStep;
         }
 
         private void RefreshUi()

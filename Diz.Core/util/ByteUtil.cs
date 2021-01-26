@@ -172,7 +172,19 @@ namespace Diz.Core.util
                 ByteParseHex1(hexChar4);
         }
 
-        // note: likely isn't quite as fast, use one of the other ByteParseHex1/2/3/4() functions directly
+        // 24 bit value
+        public static uint ByteParseHex6(char hexChar1, char hexChar2, char hexChar3, char hexChar4, char hexChar5, char hexChar6)
+        {
+            return
+                ByteParseHex1(hexChar1) * 0x100000u +
+                ByteParseHex1(hexChar2) * 0x10000u +
+                ByteParseHex1(hexChar3) * 0x1000u +
+                ByteParseHex1(hexChar4) * 0x100u +
+                ByteParseHex1(hexChar5) * 0x10u +
+                ByteParseHex1(hexChar6);
+        }
+
+        // note: likely isn't quite as fast, use one of the other ByteParseHex1/2/4/6() functions directly
         // if you have to care about performance.
         //
         // this function is a faster but more specific version of: Convert.ToInt32(line.Substring(startIndex, length), 16);

@@ -57,7 +57,10 @@ namespace Diz.Core.model
             Pointer32Bit = 0x51,
 
             [ColorDescription(KnownColor.Aquamarine)]
-            Text = 0x60
+            Text = 0x60,
+
+            [ColorDescription(KnownColor.Aqua)]
+            Binary = 0x61
         }
 
         public enum Architecture : byte

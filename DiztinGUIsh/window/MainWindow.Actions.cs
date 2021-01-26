@@ -1,6 +1,7 @@
 ﻿using Diz.Core.model;
 using Diz.Core.util;
 using DiztinGUIsh.Properties;
+using System.Text.RegularExpressions;
 
 namespace DiztinGUIsh.window
 {
@@ -67,7 +68,7 @@ namespace DiztinGUIsh.window
                 return;
             
             ProjectController.MarkChanged();
-            SelectOffset(Project.Data.Step(offset, true, false, history.Count > 0 ? history[history_index - 1] : offset - 1));
+            SelectOffset(Project.Data.Step(offset, true, false, historyView.SelectedNode != null ? (int) historyView.SelectedNode.Tag : offset - 1));
             UpdateUI_Tmp3();
         }
 
@@ -101,16 +102,16 @@ namespace DiztinGUIsh.window
             UpdateUI_Tmp3();
         }
 
-        private void Mark(int offset)
+        private void Mark(int offset, bool select = true)
         {
-            if (!RomDataPresent()) 
+            if (!RomDataPresent())
                 return;
-            
+
             ProjectController.MarkChanged();
             var newOffset = Project.Data.MarkTypeFlag(offset, markFlag, RomUtil.GetByteLengthForFlag(markFlag));
-            
-            SelectOffset(newOffset);
-            
+
+            if (select) SelectOffset(newOffset);
+
             UpdateUI_Tmp3();
         }
 
@@ -123,21 +124,21 @@ namespace DiztinGUIsh.window
             if (mark == null)
                 return;
 
-            MarkMany(mark.Property, mark.Start, mark.Value, mark.Count);
+            MarkMany(mark.Property, mark.Start, mark.Value, mark.Count, mark.UnreachedOnly);
 
             UpdateSomeUI2();
         }
 
-        private void MarkMany(int markProperty, int markStart, object markValue, int markCount)
+        private void MarkMany(int markProperty, int markStart, object markValue, int markCount, bool markUnreachedOnly = false)
         {
             var destination = markProperty switch
             {
-                0 => Project.Data.MarkTypeFlag(markStart, (Data.FlagType) markValue, markCount),
-                1 => Project.Data.MarkDataBank(markStart, (int) markValue, markCount),
-                2 => Project.Data.MarkDirectPage(markStart, (int) markValue, markCount),
-                3 => Project.Data.MarkMFlag(markStart, (bool) markValue, markCount),
-                4 => Project.Data.MarkXFlag(markStart, (bool) markValue, markCount),
-                5 => Project.Data.MarkArchitecture(markStart, (Data.Architecture) markValue, markCount),
+                0 => Project.Data.MarkTypeFlag(markStart, (Data.FlagType) markValue, markCount, markUnreachedOnly),
+                1 => Project.Data.MarkDataBank(markStart, (int) markValue, markCount, markUnreachedOnly),
+                2 => Project.Data.MarkDirectPage(markStart, (int) markValue, markCount, markUnreachedOnly),
+                3 => Project.Data.MarkMFlag(markStart, (bool) markValue, markCount, markUnreachedOnly),
+                4 => Project.Data.MarkXFlag(markStart, (bool) markValue, markCount, markUnreachedOnly),
+                5 => Project.Data.MarkArchitecture(markStart, (Data.Architecture) markValue, markCount, markUnreachedOnly),
                 _ => 0
             };
 
@@ -219,20 +220,69 @@ namespace DiztinGUIsh.window
         {
             markFlag = flagType;
             UpdateMarkerLabel();
-            if (autoMarkToolStripMenuItem.Checked) Mark(SelectedOffset);
+            if (autoMarkToolStripMenuItem.Checked)
+            for (int i = 0; i < table.SelectedCells.Count; i++)
+                Mark(table.SelectedCells[i].RowIndex + ViewOffset, i + 1 == table.SelectedCells.Count);
         }
 
-        private void ToggleMoveWithStep()
+        private void SaveSettings()
         {
-            moveWithStep = !moveWithStep;
-            moveWithStepToolStripMenuItem.Checked = moveWithStep;
-        }
-
-        private void ToggleOpenLastProjectEnabled()
-        {
+            Settings.Default.MoveWithStep = moveWithStepToolStripMenuItem.Checked;
+            Settings.Default.FindReferencesWithStep = findReferencesWithStepToolStripMenuItem.Checked;
             Settings.Default.OpenLastFileAutomatically = openLastProjectAutomaticallyToolStripMenuItem.Checked;
             Settings.Default.Save();
             UpdateUiFromSettings();
+        }
+        public int SearchOffset(int direction = 1)
+        {
+            direction = direction > 0 ? 1 : -1;
+            int offset = SelectedOffset > 0 ? SelectedOffset : 0;
+            Data.FlagType flag = Project.Data.GetFlag(offset), current;
+            try
+            {
+                if (toolStripFlagType.SelectedIndex > 0)
+                {
+                    flag = GetFlagType(toolStripFlagType.SelectedIndex - 1);
+                }
+
+                if (toolStripSearchBox.Text.Length > 0)
+                {
+                    while ((offset += direction) > 0 && offset < Project.Data.GetRomSize())
+                    {
+                        if (toolStripFlagType.SelectedIndex > 0 && Project.Data.GetFlag(offset) != flag) continue;
+                        if (Regex.IsMatch(Project.Data.GetInstruction(offset, true), toolStripSearchBox.Text)) break;
+                    }
+                    return offset;
+                }
+
+                if (toolStripFlagType.SelectedIndex > 0)
+                {
+                    if (direction > 0)
+                    {
+                        while (++offset < Project.Data.GetRomSize() && Project.Data.GetFlag(offset) == flag) continue;
+                        while (++offset < Project.Data.GetRomSize() && Project.Data.GetFlag(offset) != flag) continue;
+                    } else {
+                        while (--offset >= 0 && Project.Data.GetFlag(offset) != flag) continue;
+                        while (--offset >= 0 && Project.Data.GetFlag(offset) == flag) continue;
+                        offset++;
+                    }
+                    return offset == Project.Data.GetRomSize() ? -1 : offset;
+                }
+
+                while ((offset += direction) > 0 && offset < Project.Data.GetRomSize())
+                {
+                    current = Project.Data.GetFlag(offset);
+                    if (flag == Data.FlagType.Opcode && current == Data.FlagType.Operand) continue;
+                    if (flag == Data.FlagType.Operand && current == Data.FlagType.Opcode) continue;
+                    if (flag != current) break;
+                }
+
+            }
+            catch (System.Exception exception)
+            {
+                ShowError(exception.Message);
+            }
+            return offset;
         }
     }
 }

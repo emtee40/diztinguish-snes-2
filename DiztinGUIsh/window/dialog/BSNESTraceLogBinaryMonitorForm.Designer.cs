@@ -58,7 +58,7 @@
             this.pictureGreenSpinner = new System.Windows.Forms.PictureBox();
             this.button1 = new System.Windows.Forms.Button();
             this.cartesianChart1 = new LiveCharts.WinForms.CartesianChart();
-            ((System.ComponentModel.ISupportInitialize) (this.pictureGreenSpinner)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureGreenSpinner)).BeginInit();
             this.SuspendLayout();
             // 
             // btnStart
@@ -252,7 +252,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.Location = new System.Drawing.Point(12, 73);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(194, 13);
@@ -262,7 +262,7 @@
             // label16
             // 
             this.label16.AutoSize = true;
-            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.Location = new System.Drawing.Point(12, 7);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(116, 13);
@@ -272,7 +272,7 @@
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label17.Location = new System.Drawing.Point(254, 176);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(57, 13);
@@ -281,7 +281,7 @@
             // 
             // lblResultStatus
             // 
-            this.lblResultStatus.Anchor = ((System.Windows.Forms.AnchorStyles) ((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblResultStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblResultStatus.Location = new System.Drawing.Point(254, 86);
             this.lblResultStatus.Name = "lblResultStatus";
             this.lblResultStatus.Size = new System.Drawing.Size(291, 90);
@@ -292,7 +292,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte) (0)));
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.Location = new System.Drawing.Point(254, 73);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(43, 13);
@@ -331,6 +331,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
             this.ClientSize = new System.Drawing.Size(557, 537);
             this.Controls.Add(this.cartesianChart1);
             this.Controls.Add(this.button1);
@@ -365,9 +366,10 @@
             this.Text = "BSNES Live Tracelog Capture";
             this.Load += new System.EventHandler(this.BSNESTraceLogBinaryMonitorForm_Load);
             this.Shown += new System.EventHandler(this.BSNESTraceLogBinaryMonitorForm_Shown);
-            ((System.ComponentModel.ISupportInitialize) (this.pictureGreenSpinner)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureGreenSpinner)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion

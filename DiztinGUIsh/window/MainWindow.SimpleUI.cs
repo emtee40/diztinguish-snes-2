@@ -36,14 +36,14 @@ namespace DiztinGUIsh.window
         private void importTraceLogBinary_Click(object sender, EventArgs e) => ImportBsnesBinaryTraceLog();
         private void addLabelToolStripMenuItem_Click(object sender, EventArgs e) => BeginAddingLabel();
         private void visualMapToolStripMenuItem_Click(object sender, EventArgs e) => ShowVisualizerForm();
-        private void stepOverToolStripMenuItem_Click(object sender, EventArgs e) => Step(SelectedOffset);
-        private void stepInToolStripMenuItem_Click(object sender, EventArgs e) => StepIn(SelectedOffset);
-        private void autoStepSafeToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepSafe(SelectedOffset);
-        private void autoStepHarshToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepHarsh(SelectedOffset);
+        private void stepOverToolStripMenuItem_Click(object sender, EventArgs e) => Step(LastOffset);
+        private void stepInToolStripMenuItem_Click(object sender, EventArgs e) => StepIn(LastOffset);
+        private void autoStepSafeToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepSafe(LastOffset);
+        private void autoStepHarshToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepHarsh(LastOffset);
         private void gotoToolStripMenuItem_Click(object sender, EventArgs e) => GoTo(PromptForGotoOffset());
 
         private void gotoIntermediateAddressToolStripMenuItem_Click(object sender, EventArgs e) =>
-            GoToIntermediateAddress(SelectedOffset);
+            GoToIntermediateAddress(LastOffset);
 
         private void gotoFirstUnreachedToolStripMenuItem_Click(object sender, EventArgs e) => 
             GoToUnreached(true, true);
@@ -54,14 +54,14 @@ namespace DiztinGUIsh.window
         private void gotoNextUnreachedToolStripMenuItem_Click(object sender, EventArgs e) => 
             GoToUnreached(false, true);
         
-        private void markOneToolStripMenuItem_Click(object sender, EventArgs e) => Mark(SelectedOffset);
-        private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(SelectedOffset, 7);
-        private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(SelectedOffset, 8);
-        private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(SelectedOffset, 9);
+        private void markOneToolStripMenuItem_Click(object sender, EventArgs e) => Mark(LastOffset);
+        private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 7);
+        private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 8);
+        private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 9);
 
-        private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(SelectedOffset, 10);
+        private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 10);
 
-        private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(SelectedOffset, 11);
+        private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 11);
         private void addCommentToolStripMenuItem_Click(object sender, EventArgs e) => BeginEditingComment();
 
         private void unreachedToolStripMenuItem_Click(object sender, EventArgs e) =>
@@ -101,20 +101,34 @@ namespace DiztinGUIsh.window
 
         private void textToolStripMenuItem_Click(object sender, EventArgs e) => SetMarkerLabel(Data.FlagType.Text);
 
+        private void binToolStripMenuItem_Click(object sender, System.EventArgs e) => SetMarkerLabel(Data.FlagType.Binary);
         private void fixMisalignedInstructionsToolStripMenuItem_Click(object sender, EventArgs e) =>
             FixMisalignedInstructions();
 
-        private void moveWithStepToolStripMenuItem_Click(object sender, EventArgs e) => ToggleMoveWithStep();
         private void labelListToolStripMenuItem_Click(object sender, EventArgs e) => ShowCommentList();
 
         private void openLastProjectAutomaticallyToolStripMenuItem_Click(object sender, EventArgs e) =>
-            ToggleOpenLastProjectEnabled();
+            SaveSettings();
 
         private void closeProjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO
         }
 
+        private void referenceView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e) => SelectOffset((int) e.Node.Tag);
+
+        private void historyView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            SelectOffset((int) e.Node.Tag, -1, false);
+
+        }
+        private void referenceView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if((int) e.Node.Tag != SelectedOffset)
+                ViewOffset = (int) e.Node.Tag;
+            UpdateDataGridView();
+
+        }
         private void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBizhawkCDL();
 
         private void importBsnesTracelogText_Click(object sender, EventArgs e) => ImportBsnesTraceLogText();
@@ -133,5 +147,8 @@ namespace DiztinGUIsh.window
         private void rescanForInOutPointsToolStripMenuItem_Click(object sender, EventArgs e) => RescanForInOut();
         private void importUsageMapToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBSNESUsageMap();
         private void table_MouseWheel(object sender, MouseEventArgs e) => ScrollTableBy(e.Delta);
+        private void toolStripSearchNext_Click(object sender, System.EventArgs e) => SelectOffset(SearchOffset(1));
+        private void toolStripSearchPrevious_Click(object sender, System.EventArgs e) => SelectOffset(SearchOffset(-1));
+
     }
 }

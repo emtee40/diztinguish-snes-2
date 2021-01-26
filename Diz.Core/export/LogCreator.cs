@@ -393,15 +393,14 @@ namespace Diz.Core.export
                 case Data.FlagType.Unreached:
                 case Data.FlagType.Operand:
                 case Data.FlagType.Data8Bit:
-                case Data.FlagType.Empty:
                     max = Settings.DataPerLine;
                     break;
                 case Data.FlagType.Graphics:
                 case Data.FlagType.Music:
-                    max = 0xFFFF;
-                    break;
                 case Data.FlagType.Text:
-                    max = 0xFFFF;
+                case Data.FlagType.Empty:
+                case Data.FlagType.Binary:
+                    max = 0x8000;
                     break;
                 case Data.FlagType.Data16Bit:
                     step = 2;
@@ -434,7 +433,8 @@ namespace Diz.Core.export
                 min < max &&
                 offset + min < size &&
                 Data.GetFlag(offset + min) == Data.GetFlag(offset) &&
-                Data.GetLabelName(Data.ConvertPCtoSnes(offset + min)) == "" &&
+                (Data.GetLabelName(Data.ConvertPCtoSnes(offset + min)) == "" || Data.GetFlag(offset) == Data.FlagType.Binary) &&
+                //(Data.GetFlag(offset + min) == Data.FlagType.Text && Data.GetRomByte(offset + min) > 0x00) &&
                 (offset + min) / BankSize == myBank
             ) min += step;
             return min;
@@ -475,8 +475,9 @@ namespace Diz.Core.export
             
             LabelsWeVisited.Add(snesOffset);
 
-            var noColon = label.Length == 0 || label[0] == '-' || label[0] == '+';
-            return string.Format("{0," + (length * -1) + "}", label + (noColon ? "" : ":")) + (!noColon && Settings.NewLineLabels ? string.Format("\r\n{0," + (length * -1) + "}", "") : "");
+            var noColon = label.Length == 0 || label[0] == '-' || label[0] == '+' || label[0] == '.';
+            var newLine = label.Length > 0 && label[0] == '.';
+            return string.Format("{0," + (length * -1) + "}", label + (noColon ? "" : ":")) + ((newLine || !noColon) && Settings.NewLineLabels ? string.Format("\r\n{0," + (length * -1) + "}", "") : "");
         }
 
         // trim to length
@@ -484,7 +485,7 @@ namespace Diz.Core.export
         protected string GetCode(int offset, int length)
         {
             var bytes = GetLineByteLength(offset);
-            string code = "";
+            string code = "", label = ""; FileStream file;
             Data.FlagType flag = Data.GetFlag(offset);
 
             switch (flag)
@@ -495,22 +496,27 @@ namespace Diz.Core.export
                 case Data.FlagType.Unreached:
                 case Data.FlagType.Operand:
                 case Data.FlagType.Data8Bit:
-                case Data.FlagType.Empty:
                     code = Data.GetFormattedBytes(offset, 1, bytes);
+                    break;
+                case Data.FlagType.Empty:
+                    var padbyte = Util.NumberToBaseString(Data.GetRomByte(offset), Util.NumberBase.Hexadecimal, 2, false);
+                    var pad = Util.NumberToBaseString(Data.ConvertPCtoSnes(offset + bytes), Util.NumberBase.Hexadecimal, 6, false);
+                    code = $"padbyte ${padbyte} : pad ${pad}";
                     break;
                 case Data.FlagType.Graphics:
                 case Data.FlagType.Music:
-                    string label = Data.GetLabelName(Data.ConvertPCtoSnes(offset));
+                case Data.FlagType.Binary:
+                    label = Data.GetLabelName(Data.ConvertPCtoSnes(offset));
                     if (label == "")
                     {
                         label = "data_" + Util.NumberToBaseString(Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6, false);
                     }
 
                     code = $"incbin {label}.bin";
-                    var file = new FileStream(Output.BuildStreamPath($"{label}.bin"), FileMode.Create, FileAccess.Write);
+                    file = new FileStream(Output.BuildStreamPath($"{label}.bin"), FileMode.Create, FileAccess.Write);
                     while (bytes > 0)
                     {
-                        file.WriteByte((byte) Data.GetRomByte(offset));
+                        file.WriteByte((byte)Data.GetRomByte(offset));
                         bytes--;
                         offset++;
                     }

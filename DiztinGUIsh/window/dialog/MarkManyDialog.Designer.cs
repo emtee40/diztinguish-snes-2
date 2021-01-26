@@ -40,6 +40,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.textEnd = new System.Windows.Forms.TextBox();
             this.group = new System.Windows.Forms.GroupBox();
+            this.unreachedOnly = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.textStart = new System.Windows.Forms.TextBox();
             this.mxCombo = new System.Windows.Forms.ComboBox();
@@ -101,7 +102,8 @@
             "Pointer (24-Bit)",
             "Data (32-Bit)",
             "Pointer (32-Bit)",
-            "Text"});
+            "Text",
+            "Binary"});
             this.flagCombo.Location = new System.Drawing.Point(103, 22);
             this.flagCombo.Name = "flagCombo";
             this.flagCombo.Size = new System.Drawing.Size(121, 21);
@@ -118,6 +120,7 @@
             // 
             // cancel
             // 
+            this.cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancel.Location = new System.Drawing.Point(11, 172);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(75, 23);
@@ -129,7 +132,7 @@
             // 
             // okay
             // 
-            this.okay.Location = new System.Drawing.Point(213, 172);
+            this.okay.Location = new System.Drawing.Point(227, 171);
             this.okay.Name = "okay";
             this.okay.Size = new System.Drawing.Size(75, 23);
             this.okay.TabIndex = 3;
@@ -175,6 +178,7 @@
             // 
             // group
             // 
+            this.group.Controls.Add(this.unreachedOnly);
             this.group.Controls.Add(this.label5);
             this.group.Controls.Add(this.textStart);
             this.group.Controls.Add(this.mxCombo);
@@ -190,10 +194,20 @@
             this.group.Controls.Add(this.textCount);
             this.group.Location = new System.Drawing.Point(12, 36);
             this.group.Name = "group";
-            this.group.Size = new System.Drawing.Size(275, 128);
+            this.group.Size = new System.Drawing.Size(290, 128);
             this.group.TabIndex = 2;
             this.group.TabStop = false;
             this.group.Text = "Mark Bytes";
+            // 
+            // unreachedOnly
+            // 
+            this.unreachedOnly.AutoSize = true;
+            this.unreachedOnly.Location = new System.Drawing.Point(176, 97);
+            this.unreachedOnly.Name = "unreachedOnly";
+            this.unreachedOnly.Size = new System.Drawing.Size(103, 17);
+            this.unreachedOnly.TabIndex = 13;
+            this.unreachedOnly.Text = "Unreached Only";
+            this.unreachedOnly.UseVisualStyleBackColor = true;
             // 
             // label5
             // 
@@ -263,7 +277,7 @@
             // 
             this.radioHex.AutoSize = true;
             this.radioHex.Checked = true;
-            this.radioHex.Location = new System.Drawing.Point(104, 175);
+            this.radioHex.Location = new System.Drawing.Point(115, 174);
             this.radioHex.Name = "radioHex";
             this.radioHex.Size = new System.Drawing.Size(44, 17);
             this.radioHex.TabIndex = 4;
@@ -275,7 +289,7 @@
             // radioDec
             // 
             this.radioDec.AutoSize = true;
-            this.radioDec.Location = new System.Drawing.Point(152, 175);
+            this.radioDec.Location = new System.Drawing.Point(165, 174);
             this.radioDec.Name = "radioDec";
             this.radioDec.Size = new System.Drawing.Size(45, 17);
             this.radioDec.TabIndex = 5;
@@ -288,7 +302,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
-            this.ClientSize = new System.Drawing.Size(299, 206);
+            this.ClientSize = new System.Drawing.Size(307, 206);
             this.Controls.Add(this.radioDec);
             this.Controls.Add(this.radioHex);
             this.Controls.Add(this.group);
@@ -330,5 +344,6 @@
         private System.Windows.Forms.ComboBox mxCombo;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox textStart;
+        private System.Windows.Forms.CheckBox unreachedOnly;
     }
 }

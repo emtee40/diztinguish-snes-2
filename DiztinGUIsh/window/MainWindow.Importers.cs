@@ -56,7 +56,7 @@ namespace DiztinGUIsh.window
 
         private void ImportBsnesBinaryTraceLog()
         {
-            new BsnesTraceLogBinaryMonitorForm(this).ShowDialog();
+            new BsnesTraceLogBinaryMonitorForm(this).Show();
             RefreshUi();
         }
 

@@ -89,6 +89,8 @@ namespace Diz.Core.util
 
         public static int ConvertSnesToPc(int address, RomMapMode mode, int size)
         {
+            if (address < 0) return -1;
+
             int UnmirroredOffset(int offset) => RomUtil.UnmirroredOffset(offset, size);
 
             // WRAM is N/A to PC addressing
@@ -237,6 +239,7 @@ namespace Diz.Core.util
                 Data.FlagType.Data32Bit => "DATA32",
                 Data.FlagType.Pointer32Bit => "PTR32",
                 Data.FlagType.Text => "TEXT",
+                Data.FlagType.Binary => "BIN",
                 _ => ""
             };
         }
@@ -245,15 +248,6 @@ namespace Diz.Core.util
         {
             switch (flag)
             {
-                case Data.FlagType.Unreached:
-                case Data.FlagType.Opcode:
-                case Data.FlagType.Operand:
-                case Data.FlagType.Data8Bit:
-                case Data.FlagType.Graphics:
-                case Data.FlagType.Music:
-                case Data.FlagType.Empty:
-                case Data.FlagType.Text:
-                    return 1;
                 case Data.FlagType.Data16Bit:
                 case Data.FlagType.Pointer16Bit:
                     return 2;
@@ -263,8 +257,9 @@ namespace Diz.Core.util
                 case Data.FlagType.Data32Bit:
                 case Data.FlagType.Pointer32Bit:
                     return 4;
+                default:
+                    return 1;
             }
-            return 0;
         }
 
         public static RomMapMode DetectRomMapMode(IReadOnlyList<byte> romBytes, out bool detectedValidRomMapType)

@@ -11,7 +11,8 @@ namespace DiztinGUIsh.window.dialog
         public int Start { get; private set; }
         public int End { get; private set; }
         public int Count { get; private set; }
-        
+        public bool UnreachedOnly { get; private set; }
+
         private int value;
 
         private readonly Data data;
@@ -34,6 +35,7 @@ namespace DiztinGUIsh.window.dialog
             var rest = this.data.GetRomSize() - Start;
             Count = rest < 0x10 ? rest : 0x10;
             End = Start + Count;
+            UnreachedOnly = false;
 
             flagCombo.SelectedIndex = 3;
             archCombo.SelectedIndex = 0;
@@ -67,6 +69,7 @@ namespace DiztinGUIsh.window.dialog
                             case 11: return Data.FlagType.Data32Bit;
                             case 12: return Data.FlagType.Pointer32Bit;
                             case 13: return Data.FlagType.Text;
+                            case 14: return Data.FlagType.Binary;
                         }
 
                         break;
@@ -144,6 +147,7 @@ namespace DiztinGUIsh.window.dialog
 
         private void okay_Click(object sender, EventArgs e)
         {
+            this.UnreachedOnly = unreachedOnly.Checked;
             this.DialogResult = DialogResult.OK;
         }
 

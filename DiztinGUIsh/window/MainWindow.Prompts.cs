@@ -10,12 +10,19 @@ namespace DiztinGUIsh.window
     {
         private bool PromptContinueEvenIfUnsavedChanges()
         {
-            if (Project == null || !Project.UnsavedChanges)
-                return true;
+            if (Project != null && Project.UnsavedChanges)
+            switch (MessageBox.Show(
+                "You have unsaved changes. Do you wanna save your work?",
+                "Unsaved Changes", MessageBoxButtons.YesNoCancel))
+            {
+                case DialogResult.Cancel:
+                    return false;
+                case DialogResult.Yes:
+                    SaveProject();
+                    return true;
+            }
 
-            return DialogResult.OK == MessageBox.Show(
-                "You have unsaved changes. They will be lost if you continue.",
-                "Unsaved Changes", MessageBoxButtons.OKCancel);
+            return true;
         }
 
         private string PromptForOpenFilename()
@@ -102,7 +109,7 @@ namespace DiztinGUIsh.window
             if (!RomDataPresent())
                 return -1;
 
-            var go = new GotoDialog(ViewOffset + table.CurrentCell.RowIndex, Project.Data);
+            var go = new GotoDialog(SelectedOffset, Project.Data);
             var result = go.ShowDialog();
             if (result != DialogResult.OK)
                 return -1;

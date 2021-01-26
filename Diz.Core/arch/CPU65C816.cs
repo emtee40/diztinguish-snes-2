@@ -187,26 +187,35 @@ namespace Diz.Core.arch
                 // the expression must be verified to always match the bytes in the file [unless we allow overriding]
                 op1 = FormatOperandAddress(offset, mode);
             }
-            if(offset == 0 || data.GetFlag(offset - 1) != flag || data.GetLabelName(data.ConvertPCtoSnes(offset)) != "" ||
-                flag == Data.FlagType.Pointer16Bit || flag == Data.FlagType.Pointer24Bit || flag == Data.FlagType.Pointer32Bit)
-            switch (flag)
+            if (offset == 0 || data.GetFlag(offset - 1) != flag || data.GetLabelName(data.ConvertPCtoSnes(offset)) != "" ||
+                flag == Data.FlagType.Pointer16Bit || flag == Data.FlagType.Pointer24Bit || flag == Data.FlagType.Pointer32Bit ||
+                flag == Data.FlagType.Graphics || flag == Data.FlagType.Music || flag == Data.FlagType.Binary || flag == Data.FlagType.Empty
+            )
             {
-                case Data.FlagType.Data8Bit:
-                    return data.GetFormattedBytes(offset, 1, 0);
-                case Data.FlagType.Data16Bit:
-                    return data.GetFormattedBytes(offset, 2, 0);
-                case Data.FlagType.Data24Bit:
-                    return data.GetFormattedBytes(offset, 3, 0);
-                case Data.FlagType.Data32Bit:
-                    return data.GetFormattedBytes(offset, 4, 0);
-                case Data.FlagType.Pointer16Bit:
-                    return data.GetPointer(offset, 2);
-                case Data.FlagType.Pointer24Bit:
-                    return data.GetPointer(offset, 3);
-                case Data.FlagType.Pointer32Bit:
-                    return data.GetPointer(offset, 4);
-                case Data.FlagType.Text:
-                    return data.GetFormattedText(offset, 0);
+                switch (flag)
+                {
+                    case Data.FlagType.Data8Bit:
+                        return data.GetFormattedBytes(offset, 1, 0);
+                    case Data.FlagType.Data16Bit:
+                        return data.GetFormattedBytes(offset, 2, 0);
+                    case Data.FlagType.Data24Bit:
+                        return data.GetFormattedBytes(offset, 3, 0);
+                    case Data.FlagType.Data32Bit:
+                        return data.GetFormattedBytes(offset, 4, 0);
+                    case Data.FlagType.Pointer16Bit:
+                        return data.GetPointer(offset, 2);
+                    case Data.FlagType.Pointer24Bit:
+                        return data.GetPointer(offset, 3);
+                    case Data.FlagType.Pointer32Bit:
+                        return data.GetPointer(offset, 4);
+                    case Data.FlagType.Text:
+                        return data.GetFormattedText(offset, 0);
+                    case Data.FlagType.Graphics:
+                    case Data.FlagType.Music:
+                    case Data.FlagType.Binary:
+                    case Data.FlagType.Empty:
+                        return data.GetFormattedBytes(offset, 1, 1);
+                }
             }
             return string.Format(format, mnemonic, op1, op2);
         }
@@ -295,7 +304,7 @@ namespace Diz.Core.arch
                 return "";
 
             int ram_address = (address & 0x00ffff);
-            address = ram_address < 0x8000 && (address >> 16) < 0x7e ? ram_address : address;
+            address = ram_address < 0x8000 && mode != AddressMode.Long && mode != AddressMode.LongXIndex ? ram_address : address;
             var label = data.GetLabelName(address);
             if (label != "") 
                 return label;

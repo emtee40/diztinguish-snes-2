@@ -1,8 +1,8 @@
-﻿using System.Windows.Forms;
-using Diz.Core.export;
+﻿using Diz.Core.export;
 using Diz.Core.model;
 using DiztinGUIsh.controller;
 using DiztinGUIsh.Properties;
+using System.Windows.Forms;
 
 namespace DiztinGUIsh.window
 {
@@ -114,5 +114,26 @@ namespace DiztinGUIsh.window
 
             return settings;
         }
+        public Data.FlagType GetFlagType(int i)
+        {
+            switch (i)
+            {
+                case 1: return Data.FlagType.Opcode;
+                case 2: return Data.FlagType.Operand;
+                case 3: return Data.FlagType.Data8Bit;
+                case 4: return Data.FlagType.Graphics;
+                case 5: return Data.FlagType.Music;
+                case 6: return Data.FlagType.Empty;
+                case 7: return Data.FlagType.Data16Bit;
+                case 8: return Data.FlagType.Pointer16Bit;
+                case 9: return Data.FlagType.Data24Bit;
+                case 10: return Data.FlagType.Pointer24Bit;
+                case 11: return Data.FlagType.Data32Bit;
+                case 12: return Data.FlagType.Pointer32Bit;
+                case 13: return Data.FlagType.Text;
+                case 0: default: return Data.FlagType.Unreached;
+            }
+        }
+
     }
 }

@@ -11,6 +11,7 @@ namespace Diz.Core.model
         private byte rom;
         private byte dataBank;
         private int directPage;
+        private int baseAddr;
         private bool xFlag;
         private bool mFlag;
         private Data.FlagType typeFlag = Data.FlagType.Unreached;
@@ -35,6 +36,11 @@ namespace Diz.Core.model
         {
             get => directPage;
             set => SetField(ref directPage, value);
+        }
+        public int BaseAddr
+        {
+            get => baseAddr;
+            set => SetField(ref baseAddr, value);
         }
 
         public bool XFlag

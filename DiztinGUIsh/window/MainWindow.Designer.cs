@@ -28,7 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -42,21 +44,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.table = new System.Windows.Forms.DataGridView();
-            this.ColumnAlias = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnPC = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnChar = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnHex = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnPoints = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnInstruction = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnIA = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnFlag = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDB = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnDP = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnM = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnX = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newProjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -102,6 +90,7 @@
             this.bitDataToolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
             this.dWordPointerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.binToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.autoMarkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markOneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markManyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -124,6 +113,7 @@
             this.binaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.moveWithStepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.findReferencesWithStepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openLastProjectAutomaticallyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.labelListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importCaptureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -143,9 +133,40 @@
             this.openUsageMapFile = new System.Windows.Forms.OpenFileDialog();
             this.openTraceLogDialog = new System.Windows.Forms.OpenFileDialog();
             this.openCDLDialog = new System.Windows.Forms.OpenFileDialog();
+            this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.toolStripSearch = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSearchPrevious = new System.Windows.Forms.ToolStripButton();
+            this.toolStripFlagType = new System.Windows.Forms.ToolStripComboBox();
+            this.toolStripSearchBox = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSearchNext = new System.Windows.Forms.ToolStripButton();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.historyView = new System.Windows.Forms.TreeView();
+            this.imageList = new System.Windows.Forms.ImageList(this.components);
+            this.label2 = new System.Windows.Forms.Label();
+            this.referenceView = new System.Windows.Forms.TreeView();
+            this.label1 = new System.Windows.Forms.Label();
+            this.splitter1 = new System.Windows.Forms.Splitter();
+            this.ColumnAlias = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnPC = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnBase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnChar = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnHex = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnPoints = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnInstruction = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnIA = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnFlag = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnDB = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnDP = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnM = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnX = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.table)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            this.toolStrip.SuspendLayout();
+            this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // table
@@ -159,6 +180,7 @@
             this.table.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnAlias,
             this.ColumnPC,
+            this.ColumnBase,
             this.ColumnChar,
             this.ColumnHex,
             this.ColumnPoints,
@@ -178,7 +200,8 @@
             dataGridViewCellStyle14.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle14.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.table.DefaultCellStyle = dataGridViewCellStyle14;
-            this.table.Location = new System.Drawing.Point(0, 24);
+            this.table.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.table.Location = new System.Drawing.Point(0, 0);
             this.table.Margin = new System.Windows.Forms.Padding(0);
             this.table.Name = "table";
             this.table.RowHeadersVisible = false;
@@ -189,171 +212,13 @@
             this.table.ShowCellToolTips = false;
             this.table.ShowEditingIcon = false;
             this.table.ShowRowErrors = false;
-            this.table.Size = new System.Drawing.Size(913, 492);
+            this.table.Size = new System.Drawing.Size(964, 658);
             this.table.TabIndex = 1;
             this.table.TabStop = false;
             this.table.VirtualMode = true;
             this.table.KeyDown += new System.Windows.Forms.KeyEventHandler(this.table_KeyDown);
-            this.table.MouseDown += new System.Windows.Forms.MouseEventHandler(this.table_MouseDown);
+            this.table.MouseUp += new System.Windows.Forms.MouseEventHandler(this.table_MouseUp);
             this.table.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.table_MouseWheel);
-            // 
-            // ColumnAlias
-            // 
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ColumnAlias.DefaultCellStyle = dataGridViewCellStyle1;
-            this.ColumnAlias.HeaderText = "Label";
-            this.ColumnAlias.MaxInputLength = 60;
-            this.ColumnAlias.MinimumWidth = 6;
-            this.ColumnAlias.Name = "ColumnAlias";
-            this.ColumnAlias.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnAlias.Width = 200;
-            // 
-            // ColumnPC
-            // 
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ColumnPC.DefaultCellStyle = dataGridViewCellStyle2;
-            this.ColumnPC.HeaderText = "PC";
-            this.ColumnPC.MaxInputLength = 6;
-            this.ColumnPC.MinimumWidth = 6;
-            this.ColumnPC.Name = "ColumnPC";
-            this.ColumnPC.ReadOnly = true;
-            this.ColumnPC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnPC.Width = 58;
-            // 
-            // ColumnChar
-            // 
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas", 8.25F);
-            this.ColumnChar.DefaultCellStyle = dataGridViewCellStyle3;
-            this.ColumnChar.HeaderText = "@";
-            this.ColumnChar.MaxInputLength = 1;
-            this.ColumnChar.MinimumWidth = 6;
-            this.ColumnChar.Name = "ColumnChar";
-            this.ColumnChar.ReadOnly = true;
-            this.ColumnChar.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnChar.Width = 26;
-            // 
-            // ColumnHex
-            // 
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnHex.DefaultCellStyle = dataGridViewCellStyle4;
-            this.ColumnHex.HeaderText = "#";
-            this.ColumnHex.MaxInputLength = 3;
-            this.ColumnHex.MinimumWidth = 6;
-            this.ColumnHex.Name = "ColumnHex";
-            this.ColumnHex.ReadOnly = true;
-            this.ColumnHex.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnHex.Width = 26;
-            // 
-            // ColumnPoints
-            // 
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnPoints.DefaultCellStyle = dataGridViewCellStyle5;
-            this.ColumnPoints.HeaderText = "<*>";
-            this.ColumnPoints.MaxInputLength = 3;
-            this.ColumnPoints.MinimumWidth = 6;
-            this.ColumnPoints.Name = "ColumnPoints";
-            this.ColumnPoints.ReadOnly = true;
-            this.ColumnPoints.Width = 34;
-            // 
-            // ColumnInstruction
-            // 
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnInstruction.DefaultCellStyle = dataGridViewCellStyle6;
-            this.ColumnInstruction.HeaderText = "Instruction";
-            this.ColumnInstruction.MinimumWidth = 6;
-            this.ColumnInstruction.Name = "ColumnInstruction";
-            this.ColumnInstruction.ReadOnly = true;
-            this.ColumnInstruction.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.ColumnInstruction.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnInstruction.Width = 200;
-            // 
-            // ColumnIA
-            // 
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnIA.DefaultCellStyle = dataGridViewCellStyle7;
-            this.ColumnIA.HeaderText = "IA";
-            this.ColumnIA.MaxInputLength = 6;
-            this.ColumnIA.MinimumWidth = 6;
-            this.ColumnIA.Name = "ColumnIA";
-            this.ColumnIA.ReadOnly = true;
-            this.ColumnIA.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnIA.Width = 58;
-            // 
-            // ColumnFlag
-            // 
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ColumnFlag.DefaultCellStyle = dataGridViewCellStyle8;
-            this.ColumnFlag.HeaderText = "Flag";
-            this.ColumnFlag.MinimumWidth = 6;
-            this.ColumnFlag.Name = "ColumnFlag";
-            this.ColumnFlag.ReadOnly = true;
-            this.ColumnFlag.Width = 86;
-            // 
-            // ColumnDB
-            // 
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnDB.DefaultCellStyle = dataGridViewCellStyle9;
-            this.ColumnDB.HeaderText = "B";
-            this.ColumnDB.MaxInputLength = 2;
-            this.ColumnDB.MinimumWidth = 6;
-            this.ColumnDB.Name = "ColumnDB";
-            this.ColumnDB.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnDB.Width = 26;
-            // 
-            // ColumnDP
-            // 
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle10.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnDP.DefaultCellStyle = dataGridViewCellStyle10;
-            this.ColumnDP.HeaderText = "D";
-            this.ColumnDP.MaxInputLength = 4;
-            this.ColumnDP.MinimumWidth = 6;
-            this.ColumnDP.Name = "ColumnDP";
-            this.ColumnDP.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.ColumnDP.Width = 42;
-            // 
-            // ColumnM
-            // 
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle11.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnM.DefaultCellStyle = dataGridViewCellStyle11;
-            this.ColumnM.HeaderText = "M";
-            this.ColumnM.MaxInputLength = 2;
-            this.ColumnM.MinimumWidth = 6;
-            this.ColumnM.Name = "ColumnM";
-            this.ColumnM.ReadOnly = true;
-            this.ColumnM.Width = 26;
-            // 
-            // ColumnX
-            // 
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle12.Font = new System.Drawing.Font("Lucida Console", 8F);
-            this.ColumnX.DefaultCellStyle = dataGridViewCellStyle12;
-            this.ColumnX.HeaderText = "X";
-            this.ColumnX.MaxInputLength = 2;
-            this.ColumnX.MinimumWidth = 6;
-            this.ColumnX.Name = "ColumnX";
-            this.ColumnX.ReadOnly = true;
-            this.ColumnX.Width = 26;
-            // 
-            // ColumnComment
-            // 
-            this.ColumnComment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ColumnComment.DefaultCellStyle = dataGridViewCellStyle13;
-            this.ColumnComment.HeaderText = "Comment";
-            this.ColumnComment.MinimumWidth = 6;
-            this.ColumnComment.Name = "ColumnComment";
-            this.ColumnComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // menuStrip1
             // 
@@ -365,7 +230,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(930, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1184, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -561,6 +426,7 @@
             // autoStepSafeToolStripMenuItem
             // 
             this.autoStepSafeToolStripMenuItem.Name = "autoStepSafeToolStripMenuItem";
+            this.autoStepSafeToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.A)));
             this.autoStepSafeToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
             this.autoStepSafeToolStripMenuItem.Text = "&Auto Step (Safe)";
             this.autoStepSafeToolStripMenuItem.Click += new System.EventHandler(this.autoStepSafeToolStripMenuItem_Click);
@@ -640,6 +506,7 @@
             this.bitDataToolStripMenuItem3,
             this.dWordPointerToolStripMenuItem,
             this.textToolStripMenuItem,
+            this.binToolStripMenuItem,
             this.autoMarkToolStripMenuItem});
             this.selectMarkerToolStripMenuItem.Name = "selectMarkerToolStripMenuItem";
             this.selectMarkerToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
@@ -756,6 +623,14 @@
             this.textToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
             this.textToolStripMenuItem.Text = "Text";
             this.textToolStripMenuItem.Click += new System.EventHandler(this.textToolStripMenuItem_Click);
+            // 
+            // binToolStripMenuItem
+            // 
+            this.binToolStripMenuItem.Name = "binToolStripMenuItem";
+            this.binToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.B)));
+            this.binToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.binToolStripMenuItem.Text = "Binary";
+            this.binToolStripMenuItem.Click += new System.EventHandler(this.binToolStripMenuItem_Click);
             // 
             // autoMarkToolStripMenuItem
             // 
@@ -896,8 +771,9 @@
             // decimalToolStripMenuItem
             // 
             this.decimalToolStripMenuItem.Name = "decimalToolStripMenuItem";
-            this.decimalToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.C)));
-            this.decimalToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.decimalToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.C)));
+            this.decimalToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
             this.decimalToolStripMenuItem.Text = "Decimal";
             this.decimalToolStripMenuItem.Click += new System.EventHandler(this.decimalToolStripMenuItem_Click);
             // 
@@ -906,16 +782,18 @@
             this.hexadecimalToolStripMenuItem.Checked = true;
             this.hexadecimalToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.hexadecimalToolStripMenuItem.Name = "hexadecimalToolStripMenuItem";
-            this.hexadecimalToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.H)));
-            this.hexadecimalToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.hexadecimalToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.H)));
+            this.hexadecimalToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
             this.hexadecimalToolStripMenuItem.Text = "Hexadecimal";
             this.hexadecimalToolStripMenuItem.Click += new System.EventHandler(this.hexadecimalToolStripMenuItem_Click);
             // 
             // binaryToolStripMenuItem
             // 
             this.binaryToolStripMenuItem.Name = "binaryToolStripMenuItem";
-            this.binaryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.B)));
-            this.binaryToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.binaryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.B)));
+            this.binaryToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
             this.binaryToolStripMenuItem.Text = "Binary";
             this.binaryToolStripMenuItem.Click += new System.EventHandler(this.binaryToolStripMenuItem_Click);
             // 
@@ -923,6 +801,7 @@
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.moveWithStepToolStripMenuItem,
+            this.findReferencesWithStepToolStripMenuItem,
             this.openLastProjectAutomaticallyToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
@@ -931,11 +810,18 @@
             // moveWithStepToolStripMenuItem
             // 
             this.moveWithStepToolStripMenuItem.Checked = true;
+            this.moveWithStepToolStripMenuItem.CheckOnClick = true;
             this.moveWithStepToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.moveWithStepToolStripMenuItem.Name = "moveWithStepToolStripMenuItem";
             this.moveWithStepToolStripMenuItem.Size = new System.Drawing.Size(244, 22);
             this.moveWithStepToolStripMenuItem.Text = "Move With Step";
-            this.moveWithStepToolStripMenuItem.Click += new System.EventHandler(this.moveWithStepToolStripMenuItem_Click);
+            // 
+            // findReferencesWithStepToolStripMenuItem
+            // 
+            this.findReferencesWithStepToolStripMenuItem.CheckOnClick = true;
+            this.findReferencesWithStepToolStripMenuItem.Name = "findReferencesWithStepToolStripMenuItem";
+            this.findReferencesWithStepToolStripMenuItem.Size = new System.Drawing.Size(244, 22);
+            this.findReferencesWithStepToolStripMenuItem.Text = "Find References With Step";
             // 
             // openLastProjectAutomaticallyToolStripMenuItem
             // 
@@ -1008,10 +894,10 @@
             this.percentComplete,
             this.seperator1,
             this.currentMarker});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 516);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 707);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 15, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(930, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1184, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -1049,11 +935,11 @@
             // 
             // vScrollBar1
             // 
-            this.vScrollBar1.Enabled = false;
-            this.vScrollBar1.Location = new System.Drawing.Point(913, 24);
+            this.vScrollBar1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.vScrollBar1.Location = new System.Drawing.Point(964, 0);
             this.vScrollBar1.Maximum = 32768;
             this.vScrollBar1.Name = "vScrollBar1";
-            this.vScrollBar1.Size = new System.Drawing.Size(17, 492);
+            this.vScrollBar1.Size = new System.Drawing.Size(17, 658);
             this.vScrollBar1.TabIndex = 2;
             this.vScrollBar1.ValueChanged += new System.EventHandler(this.vScrollBar1_ValueChanged);
             // 
@@ -1069,14 +955,342 @@
             // 
             this.openCDLDialog.Filter = "BizHawk Code Data Logger Files|*.cdl|All Files|*.*";
             // 
+            // toolStrip
+            // 
+            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripSearch,
+            this.toolStripSearchPrevious,
+            this.toolStripFlagType,
+            this.toolStripSearchBox,
+            this.toolStripSearchNext});
+            this.toolStrip.Location = new System.Drawing.Point(0, 24);
+            this.toolStrip.Name = "toolStrip";
+            this.toolStrip.Size = new System.Drawing.Size(1184, 25);
+            this.toolStrip.TabIndex = 4;
+            this.toolStrip.Text = "toolStrip";
+            // 
+            // toolStripSearch
+            // 
+            this.toolStripSearch.Name = "toolStripSearch";
+            this.toolStripSearch.Size = new System.Drawing.Size(45, 22);
+            this.toolStripSearch.Text = "Search:";
+            // 
+            // toolStripSearchPrevious
+            // 
+            this.toolStripSearchPrevious.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripSearchPrevious.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSearchPrevious.Image")));
+            this.toolStripSearchPrevious.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripSearchPrevious.Name = "toolStripSearchPrevious";
+            this.toolStripSearchPrevious.Size = new System.Drawing.Size(23, 22);
+            this.toolStripSearchPrevious.Text = "<";
+            this.toolStripSearchPrevious.ToolTipText = "Previous";
+            this.toolStripSearchPrevious.Click += new System.EventHandler(this.toolStripSearchPrevious_Click);
+            // 
+            // toolStripFlagType
+            // 
+            this.toolStripFlagType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.toolStripFlagType.Items.AddRange(new object[] {
+            "Differences",
+            "Unreached",
+            "Opcode",
+            "Operand",
+            "Data (8-Bit)",
+            "Graphics",
+            "Music",
+            "Empty",
+            "Data (16-Bit)",
+            "Pointer (16-Bit)",
+            "Data (24-Bit)",
+            "Pointer (24-Bit)",
+            "Data (32-Bit)",
+            "Pointer (32-Bit)",
+            "Text"});
+            this.toolStripFlagType.Name = "toolStripFlagType";
+            this.toolStripFlagType.Size = new System.Drawing.Size(121, 25);
+            // 
+            // toolStripSearchBox
+            // 
+            this.toolStripSearchBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.toolStripSearchBox.Name = "toolStripSearchBox";
+            this.toolStripSearchBox.Size = new System.Drawing.Size(100, 25);
+            // 
+            // toolStripSearchNext
+            // 
+            this.toolStripSearchNext.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripSearchNext.Image = ((System.Drawing.Image)(resources.GetObject("toolStripSearchNext.Image")));
+            this.toolStripSearchNext.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripSearchNext.Name = "toolStripSearchNext";
+            this.toolStripSearchNext.Size = new System.Drawing.Size(23, 22);
+            this.toolStripSearchNext.Text = ">";
+            this.toolStripSearchNext.ToolTipText = "Next";
+            this.toolStripSearchNext.Click += new System.EventHandler(this.toolStripSearchNext_Click);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.table);
+            this.panel1.Controls.Add(this.vScrollBar1);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(0, 49);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(981, 658);
+            this.panel1.TabIndex = 7;
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.historyView);
+            this.panel2.Controls.Add(this.label2);
+            this.panel2.Controls.Add(this.referenceView);
+            this.panel2.Controls.Add(this.label1);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Right;
+            this.panel2.Location = new System.Drawing.Point(984, 49);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(200, 658);
+            this.panel2.TabIndex = 8;
+            // 
+            // historyView
+            // 
+            this.historyView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.historyView.ImageIndex = 0;
+            this.historyView.ImageList = this.imageList;
+            this.historyView.Location = new System.Drawing.Point(0, 356);
+            this.historyView.Name = "historyView";
+            this.historyView.SelectedImageIndex = 1;
+            this.historyView.ShowRootLines = false;
+            this.historyView.Size = new System.Drawing.Size(200, 302);
+            this.historyView.TabIndex = 3;
+            this.historyView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.historyView_AfterSelect);
+            // 
+            // imageList
+            // 
+            this.imageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList.ImageStream")));
+            this.imageList.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList.Images.SetKeyName(0, "bullet_black.png");
+            this.imageList.Images.SetKeyName(1, "bullet_go.png");
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(0, 339);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(52, 17);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "History";
+            // 
+            // referenceView
+            // 
+            this.referenceView.Dock = System.Windows.Forms.DockStyle.Top;
+            this.referenceView.ImageIndex = 0;
+            this.referenceView.ImageList = this.imageList;
+            this.referenceView.Location = new System.Drawing.Point(0, 17);
+            this.referenceView.Name = "referenceView";
+            this.referenceView.SelectedImageIndex = 1;
+            this.referenceView.ShowPlusMinus = false;
+            this.referenceView.ShowRootLines = false;
+            this.referenceView.Size = new System.Drawing.Size(200, 322);
+            this.referenceView.TabIndex = 0;
+            this.referenceView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.referenceView_AfterSelect);
+            this.referenceView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.referenceView_NodeMouseDoubleClick);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(81, 17);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "References";
+            // 
+            // splitter1
+            // 
+            this.splitter1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.splitter1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.splitter1.Location = new System.Drawing.Point(981, 49);
+            this.splitter1.Name = "splitter1";
+            this.splitter1.Size = new System.Drawing.Size(3, 658);
+            this.splitter1.TabIndex = 9;
+            this.splitter1.TabStop = false;
+            // 
+            // ColumnAlias
+            // 
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ColumnAlias.DefaultCellStyle = dataGridViewCellStyle1;
+            this.ColumnAlias.HeaderText = "Label";
+            this.ColumnAlias.MaxInputLength = 60;
+            this.ColumnAlias.MinimumWidth = 6;
+            this.ColumnAlias.Name = "ColumnAlias";
+            this.ColumnAlias.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnAlias.Width = 200;
+            // 
+            // ColumnPC
+            // 
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ColumnPC.DefaultCellStyle = dataGridViewCellStyle2;
+            this.ColumnPC.HeaderText = "PC";
+            this.ColumnPC.MaxInputLength = 6;
+            this.ColumnPC.MinimumWidth = 6;
+            this.ColumnPC.Name = "ColumnPC";
+            this.ColumnPC.ReadOnly = true;
+            this.ColumnPC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnPC.Width = 58;
+            // 
+            // ColumnBase
+            // 
+            this.ColumnBase.HeaderText = "Base";
+            this.ColumnBase.MaxInputLength = 6;
+            this.ColumnBase.MinimumWidth = 6;
+            this.ColumnBase.Name = "ColumnBase";
+            this.ColumnBase.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnBase.Width = 58;
+            // 
+            // ColumnChar
+            // 
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas", 8.25F);
+            this.ColumnChar.DefaultCellStyle = dataGridViewCellStyle3;
+            this.ColumnChar.HeaderText = "@";
+            this.ColumnChar.MaxInputLength = 1;
+            this.ColumnChar.MinimumWidth = 6;
+            this.ColumnChar.Name = "ColumnChar";
+            this.ColumnChar.ReadOnly = true;
+            this.ColumnChar.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnChar.Width = 26;
+            // 
+            // ColumnHex
+            // 
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnHex.DefaultCellStyle = dataGridViewCellStyle4;
+            this.ColumnHex.HeaderText = "#";
+            this.ColumnHex.MaxInputLength = 3;
+            this.ColumnHex.MinimumWidth = 6;
+            this.ColumnHex.Name = "ColumnHex";
+            this.ColumnHex.ReadOnly = true;
+            this.ColumnHex.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnHex.Width = 26;
+            // 
+            // ColumnPoints
+            // 
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnPoints.DefaultCellStyle = dataGridViewCellStyle5;
+            this.ColumnPoints.HeaderText = "<*>";
+            this.ColumnPoints.MaxInputLength = 3;
+            this.ColumnPoints.MinimumWidth = 6;
+            this.ColumnPoints.Name = "ColumnPoints";
+            this.ColumnPoints.ReadOnly = true;
+            this.ColumnPoints.Width = 34;
+            // 
+            // ColumnInstruction
+            // 
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnInstruction.DefaultCellStyle = dataGridViewCellStyle6;
+            this.ColumnInstruction.HeaderText = "Instruction";
+            this.ColumnInstruction.MinimumWidth = 6;
+            this.ColumnInstruction.Name = "ColumnInstruction";
+            this.ColumnInstruction.ReadOnly = true;
+            this.ColumnInstruction.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.ColumnInstruction.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnInstruction.Width = 200;
+            // 
+            // ColumnIA
+            // 
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnIA.DefaultCellStyle = dataGridViewCellStyle7;
+            this.ColumnIA.HeaderText = "IA";
+            this.ColumnIA.MaxInputLength = 6;
+            this.ColumnIA.MinimumWidth = 6;
+            this.ColumnIA.Name = "ColumnIA";
+            this.ColumnIA.ReadOnly = true;
+            this.ColumnIA.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnIA.Width = 58;
+            // 
+            // ColumnFlag
+            // 
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ColumnFlag.DefaultCellStyle = dataGridViewCellStyle8;
+            this.ColumnFlag.HeaderText = "Flag";
+            this.ColumnFlag.MinimumWidth = 6;
+            this.ColumnFlag.Name = "ColumnFlag";
+            this.ColumnFlag.ReadOnly = true;
+            this.ColumnFlag.Width = 86;
+            // 
+            // ColumnDB
+            // 
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnDB.DefaultCellStyle = dataGridViewCellStyle9;
+            this.ColumnDB.HeaderText = "B";
+            this.ColumnDB.MaxInputLength = 2;
+            this.ColumnDB.MinimumWidth = 6;
+            this.ColumnDB.Name = "ColumnDB";
+            this.ColumnDB.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnDB.Width = 26;
+            // 
+            // ColumnDP
+            // 
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnDP.DefaultCellStyle = dataGridViewCellStyle10;
+            this.ColumnDP.HeaderText = "D";
+            this.ColumnDP.MaxInputLength = 4;
+            this.ColumnDP.MinimumWidth = 6;
+            this.ColumnDP.Name = "ColumnDP";
+            this.ColumnDP.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.ColumnDP.Width = 42;
+            // 
+            // ColumnM
+            // 
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle11.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnM.DefaultCellStyle = dataGridViewCellStyle11;
+            this.ColumnM.HeaderText = "M";
+            this.ColumnM.MaxInputLength = 2;
+            this.ColumnM.MinimumWidth = 6;
+            this.ColumnM.Name = "ColumnM";
+            this.ColumnM.ReadOnly = true;
+            this.ColumnM.Width = 26;
+            // 
+            // ColumnX
+            // 
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle12.Font = new System.Drawing.Font("Lucida Console", 8F);
+            this.ColumnX.DefaultCellStyle = dataGridViewCellStyle12;
+            this.ColumnX.HeaderText = "X";
+            this.ColumnX.MaxInputLength = 2;
+            this.ColumnX.MinimumWidth = 6;
+            this.ColumnX.Name = "ColumnX";
+            this.ColumnX.ReadOnly = true;
+            this.ColumnX.Width = 26;
+            // 
+            // ColumnComment
+            // 
+            this.ColumnComment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ColumnComment.DefaultCellStyle = dataGridViewCellStyle13;
+            this.ColumnComment.HeaderText = "Comment";
+            this.ColumnComment.MinimumWidth = 6;
+            this.ColumnComment.Name = "ColumnComment";
+            this.ColumnComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(930, 538);
-            this.Controls.Add(this.vScrollBar1);
+            this.ClientSize = new System.Drawing.Size(1184, 729);
+            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.splitter1);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.toolStrip);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.table);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
@@ -1093,6 +1307,11 @@
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.toolStrip.ResumeLayout(false);
+            this.toolStrip.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1119,7 +1338,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem gotoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem gotoIntermediateAddressToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem gotoFirstUnreachedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem gotoNearUnreachedToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripMenuItem selectMarkerToolStripMenuItem;
@@ -1169,7 +1387,6 @@
         private System.Windows.Forms.ToolStripStatusLabel currentMarker;
         private System.Windows.Forms.ToolStripMenuItem rescanForInOutPointsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem githubToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem gotoNextUnreachedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem moveWithStepToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog openUsageMapFile;
@@ -1187,8 +1404,27 @@
         private System.Windows.Forms.ToolStripMenuItem importTraceLogBinary;
         private System.Windows.Forms.ToolStripMenuItem closeProjectToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem autoMarkToolStripMenuItem;
+        private System.Windows.Forms.ToolStrip toolStrip;
+        private System.Windows.Forms.ToolStripLabel toolStripSearch;
+        private System.Windows.Forms.ToolStripButton toolStripSearchNext;
+        private System.Windows.Forms.ToolStripButton toolStripSearchPrevious;
+        private System.Windows.Forms.ToolStripComboBox toolStripFlagType;
+        private System.Windows.Forms.ToolStripTextBox toolStripSearchBox;
+        private System.Windows.Forms.ToolStripMenuItem binToolStripMenuItem;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.TreeView referenceView;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Splitter splitter1;
+        private System.Windows.Forms.TreeView historyView;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ImageList imageList;
+        private System.Windows.Forms.ToolStripMenuItem gotoFirstUnreachedToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem gotoNextUnreachedToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem findReferencesWithStepToolStripMenuItem;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnAlias;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPC;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnBase;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnChar;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHex;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPoints;

@@ -89,6 +89,8 @@ namespace Diz.Core.model
         public void SetDataBank(int i, int dBank) => RomBytes[i].DataBank = (byte)dBank;
         public int GetDirectPage(int i) => RomBytes[i].DirectPage;
         public void SetDirectPage(int i, int dPage) => RomBytes[i].DirectPage = 0xFFFF & dPage;
+        public int GetBaseAddr(int i) => RomBytes[i].BaseAddr;
+        public void SetBaseAddr(int i, int bAddr) => RomBytes[i].BaseAddr = 0xFFFFFF & bAddr;
         public bool GetXFlag(int i) => RomBytes[i].XFlag;
         public void SetXFlag(int i, bool x) => RomBytes[i].XFlag = x;
         public bool GetMFlag(int i) => RomBytes[i].MFlag;
@@ -291,9 +293,17 @@ namespace Diz.Core.model
         public int GetSectionSize(int offset)
         {
             int bytes = 1;
-            while (GetFlag(offset + bytes) == GetFlag(offset) && GetLabelName(ConvertPCtoSnes(offset + bytes)) == "")
+            while (offset + bytes < GetRomSize() && GetFlag(offset + bytes) == GetFlag(offset) && GetLabelName(ConvertPCtoSnes(offset + bytes)) == "")
                 bytes++;
             return bytes;
+        }
+        public int CalculateBaseAddr(int offset)
+        {
+            if (GetBaseAddr(offset) <= 0) return -1;
+            int pos = 0, bank = offset / GetBankSize();
+            while (offset - pos >= 0 && GetBaseAddr(offset - pos) == GetBaseAddr(offset) && bank == offset - pos / GetBankSize())// && GetLabelName(ConvertPCtoSnes(offset - pos)) == "")
+                pos++;
+            return pos;
         }
 
         public string GetFormattedText(int offset, int bytes = 0)
@@ -437,21 +447,22 @@ namespace Diz.Core.model
             return newOffset;
         }
 
-        public int Mark(Action<int> MarkAction, int offset, int count)
+        public int Mark(Action<int> MarkAction, int offset, int count, bool unreachedonly = false)
         {
             int i, size = GetRomSize();
             for (i = 0; i < count && offset + i < size; i++) 
-                MarkAction(offset + i);
+                if(!unreachedonly || unreachedonly && GetFlag(offset + i) == FlagType.Unreached)
+                    MarkAction(offset + i);
             
             return offset + i < size ? offset + i : size - 1;
         }
 
-        public int MarkTypeFlag(int offset, FlagType type, int count) => Mark(i => SetFlag(i, type), offset, count);
-        public int MarkDataBank(int offset, int db, int count) => Mark(i => SetDataBank(i, db), offset, count);
-        public int MarkDirectPage(int offset, int dp, int count) => Mark(i => SetDirectPage(i, dp), offset, count);
-        public int MarkXFlag(int offset, bool x, int count) => Mark(i => SetXFlag(i, x), offset, count);
-        public int MarkMFlag(int offset, bool m, int count) => Mark(i => SetMFlag(i, m), offset, count);
-        public int MarkArchitecture(int offset, Architecture arch, int count) => Mark(i => SetArchitecture(i, arch), offset, count);
+        public int MarkTypeFlag(int offset, FlagType type, int count, bool unreachedonly = false) => Mark(i => SetFlag(i, type), offset, count, unreachedonly);
+        public int MarkDataBank(int offset, int db, int count, bool unreachedonly = false) => Mark(i => SetDataBank(i, db), offset, count, unreachedonly);
+        public int MarkDirectPage(int offset, int dp, int count, bool unreachedonly = false) => Mark(i => SetDirectPage(i, dp), offset, count, unreachedonly);
+        public int MarkXFlag(int offset, bool x, int count, bool unreachedonly = false) => Mark(i => SetXFlag(i, x), offset, count, unreachedonly);
+        public int MarkMFlag(int offset, bool m, int count, bool unreachedonly = false) => Mark(i => SetMFlag(i, m), offset, count, unreachedonly);
+        public int MarkArchitecture(int offset, Architecture arch, int count, bool unreachedonly = false) => Mark(i => SetArchitecture(i, arch), offset, count, unreachedonly);
 
         public int GetInstructionLength(int offset)
         {
