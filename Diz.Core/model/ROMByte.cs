@@ -12,6 +12,7 @@ namespace Diz.Core.model
         private byte dataBank;
         private int directPage;
         private int baseAddr;
+        private int indirectAddr;
         private bool xFlag;
         private bool mFlag;
         private Data.FlagType typeFlag = Data.FlagType.Unreached;
@@ -41,6 +42,11 @@ namespace Diz.Core.model
         {
             get => baseAddr;
             set => SetField(ref baseAddr, value);
+        }
+        public int IndirectAddr
+        {
+            get => indirectAddr;
+            set => SetField(ref indirectAddr, value);
         }
 
         public bool XFlag

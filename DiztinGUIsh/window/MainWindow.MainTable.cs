@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Diz.Core.model;
 using Diz.Core.util;
@@ -25,11 +26,19 @@ namespace DiztinGUIsh.window
 
         public void InvalidateTable() => table.Invalidate();
         public string ColumnName(int i) => table.Columns[i].Name.Replace("Column", "").ToLower();
+        public int ColumnIndex(string name) {
+            for (int i = 0; i < table.Columns.Count; i++)
+                if (table.Columns[i].Name.Replace("Column", "").ToLower() == name)
+                    return i;
+            return 0;
+        }
 
         private void ScrollTableBy(int delta)
         {
             if (Project?.Data == null || Project.Data.GetRomSize() <= 0)
                 return;
+
+            if (table.IsCurrentCellInEditMode) table.EndEdit();
 
             var amount = delta / 0x18;
             ViewOffset -= amount;
@@ -57,8 +66,8 @@ namespace DiztinGUIsh.window
         {
             LastOffset = SelectedOffset;
             LastColumn = SelectedColumn;
-
-            ShowReferences(SelectedOffset);
+            if(e.Button != MouseButtons.Right)
+                ShowReferences(SelectedOffset);
 
             InvalidateTable();
         }
@@ -73,7 +82,7 @@ namespace DiztinGUIsh.window
             TreeNode tn;
 
             e.Handled = true;
-            SelectOffset(offset, -1, false);
+            //SelectOffset(offset, -1, false);
             switch (e.KeyCode)
             {
                 case Keys.Home:
@@ -102,25 +111,27 @@ namespace DiztinGUIsh.window
                         Mark(table.SelectedCells[i].RowIndex + ViewOffset, i + 1 == table.SelectedCells.Count);
                     break;
                 case Keys.L:
-                    table.CurrentCell = table.Rows[SelectedRow].Cells[0];
+                    table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("label")];
                     table.BeginEdit(true);
                     break;
                 case Keys.B:
-                    table.CurrentCell = table.Rows[SelectedRow].Cells[8];
+                    table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("db")];
                     table.BeginEdit(true);
                     break;
                 case Keys.D:
-                    table.CurrentCell = table.Rows[SelectedRow].Cells[9];
+                    table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("dp")];
                     table.BeginEdit(true);
                     break;
                 case Keys.M:
-                    Project.Data.SetMFlag(offset, !Project.Data.GetMFlag(offset));
+                    for (int i = 0; i < table.SelectedCells.Count; i++)
+                        Project.Data.ToggleMFlag(table.SelectedCells[i].RowIndex + ViewOffset);
                     break;
                 case Keys.X:
-                    Project.Data.SetXFlag(offset, !Project.Data.GetXFlag(offset));
+                    for (int i = 0; i < table.SelectedCells.Count; i++)
+                        Project.Data.ToggleXFlag(table.SelectedCells[i].RowIndex + ViewOffset);
                     break;
                 case Keys.C:
-                    table.CurrentCell = table.Rows[SelectedRow].Cells[12];
+                    table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("comment")];
                     table.BeginEdit(true);
                     break;
                 case Keys.R:
@@ -138,11 +149,12 @@ namespace DiztinGUIsh.window
                         historyView.SelectedNode = tn;
                     }
                     break;
-                case Keys.F2:
-                    SelectOffset(SearchOffset(-1));
-                    break;
                 case Keys.F3:
-                    SelectOffset(SearchOffset(1));
+                    SelectOffset(SearchOffset(e.Shift ? -1 : 1));
+                    break;
+                case Keys.Enter:
+                    LastOffset = SelectedOffset+1;
+                    e.Handled = false;
                     break;
                 default:
                     e.Handled = false;
@@ -156,18 +168,18 @@ namespace DiztinGUIsh.window
         {
             var row = e.RowIndex + ViewOffset;
             if (row >= Project.Data.GetRomSize()) return;
+            bool editing = table.IsCurrentCellInEditMode && e.ColumnIndex == SelectedColumn, samerow = row == SelectedOffset;
             switch (ColumnName(e.ColumnIndex))
             {
                 case "label":
                     e.Value = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(row));
                     break;
-                case "pc":
-                    int baddr = Project.Data.GetBaseAddr(row) + Project.Data.CalculateBaseAddr(row), snes = Project.Data.ConvertPCtoSnes(row);
-                    
-                    e.Value = Util.NumberToBaseString(baddr >= 0 ? baddr : snes, Util.NumberBase.Hexadecimal, 6);
+                case "pc":                    
+                    e.Value = Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(row), Util.NumberBase.Hexadecimal, 6);
                     break;
                 case "base":
-                    e.Value = Util.NumberToBaseString(Project.Data.GetBaseAddr(row), Util.NumberBase.Hexadecimal, 6);
+                    int baddr = editing ? Project.Data.GetBaseAddr(row) : Project.Data.CalculateBaseAddr(row);
+                    e.Value = baddr > 0 ? Util.NumberToBaseString(baddr, Util.NumberBase.Hexadecimal, 6) : "";
                     break;
                 case "char":
                     e.Value = (char)Project.Data.GetRomByte(row);
@@ -180,11 +192,12 @@ namespace DiztinGUIsh.window
                     break;
                 case "instruction":
                     var len = Project.Data.GetInstructionLength(row);
-                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, true) : "";
+                    e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, true).Truncate(200) : "";
                     break;
                 case "ia":
-                    var ia = Project.Data.GetIntermediateAddressOrPointer(row);
-                    e.Value = ia >= 0 ? Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6) : "";
+                    var ia = Project.Data.GetIntermediateAddressOrPointer(row, true);
+                    if (ia < 0 || (editing && samerow)) ia = Project.Data.GetIndirectAddr(row);
+                    e.Value = ia > 0 ? Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6) : "";
                     break;
                 case "flag":
                     e.Value = Util.GetEnumDescription(Project.Data.GetFlag(row));
@@ -210,44 +223,47 @@ namespace DiztinGUIsh.window
         private void table_CellValuePushed(object sender, DataGridViewCellValueEventArgs e)
         {
             string value = e.Value as string;
-            int result;
-            int row = e.RowIndex + ViewOffset;
+            int result, row = e.RowIndex + ViewOffset;
             if (row >= Project.Data.GetRomSize()) return;
             switch (ColumnName(e.ColumnIndex))
             {
                 case "label":
+                    if (value != null && !Regex.IsMatch(value, ".?[a-zA-Z0-9_]+|[\\+\\-]+")) value = null;
                     Project.Data.AddLabel(Project.Data.ConvertPCtoSnes(row), new Diz.Core.model.Label() { Name = value }, true);
-                    break; // todo (validate for valid label characters)
+                    break;
                 case "db":
-                    if (int.TryParse(value, NumberStyles.HexNumber, null, out result)) Project.Data.SetDataBank(row, result);
+                    Project.Data.SetDataBank(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
                     break;
                 case "dp":
-                    if (int.TryParse(value, NumberStyles.HexNumber, null, out result)) Project.Data.SetDirectPage(row, result);
+                    Project.Data.SetDirectPage(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
                     break;
                 case "base":
-                    if (int.TryParse(value, NumberStyles.HexNumber, null, out result)) Project.Data.SetBaseAddr(row, result);
+                    Project.Data.SetBaseAddr(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
+                    break;
+                case "ia":
+                    Project.Data.SetIndirectAddr(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
                     break;
                 case "m":
-                    Project.Data.SetMFlag(row, (value == "8" || value == "M"));
+                    Project.Data.SetMFlag(row, (value == "8" || value.ToUpper() == "M"));
                     break;
                 case "x":
-                    Project.Data.SetXFlag(row, (value == "8" || value == "X"));
+                    Project.Data.SetXFlag(row, (value == "8" || value.ToUpper() == "X"));
                     break;
                 case "comment":
                     Project.Data.AddComment(Project.Data.ConvertPCtoSnes(row), value, true);
                     break;
             }
 
-            table.InvalidateRow(e.RowIndex);
+            InvalidateTable();
         }
 
-        public void PaintCell(int offset, DataGridViewCellStyle style, int column_index, int selOffset)
+        public void PaintCell(int offset, DataGridViewCellStyle style, int column_index, int selOffset, DataGridViewCellPaintingEventArgs cell)
         {
             // editable cells show up green
             string column = ColumnName(column_index);
-            if (column == "label" || column == "db" || column == "dp" || column == "comment") style.SelectionBackColor = Color.Chartreuse;
+            if (column == "label" || column == "base" || column == "db" || column == "dp" || column == "comment") style.SelectionBackColor = Color.Chartreuse;
 
-            bool diff = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(offset)) == "" && (offset > 0 && Project.Data.GetFlag(offset-1) == Project.Data.GetFlag(offset));
+            bool diff = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(offset)) == "" && (offset > 0 && Project.Data.GetFlag(offset - 1) == Project.Data.GetFlag(offset));
             switch (Project.Data.GetFlag(offset))
             {
                 case Data.FlagType.Unreached:
@@ -331,71 +347,113 @@ namespace DiztinGUIsh.window
                     break;
             }
 
+            int ia = Project.Data.ConvertSnesToPc(Project.Data.GetIntermediateAddressOrPointer(offset));
+            int sia = Project.Data.ConvertSnesToPc(Project.Data.GetIntermediateAddressOrPointer(selOffset));
             if (selOffset >= 0 && selOffset < Project.Data.GetRomSize())
             {
-                int ia = Project.Data.ConvertSnesToPc(Project.Data.GetIntermediateAddressOrPointer(offset));
-                int sia = Project.Data.ConvertSnesToPc(Project.Data.GetIntermediateAddressOrPointer(selOffset));
                 if ((column == "pc" && sia >= 0 && sia == offset) || (column == "ia" && ia >= 0 && ia == selOffset))
                     style.BackColor = Color.DeepPink;
             }
+
+
+            switch (column)
+            {
+                case "base":
+                    style.ForeColor = Project.Data.GetBaseAddr(offset) > 0 /*&& Project.Data.GetFlag(offset) != Data.FlagType.Operand*/ ? Color.DarkBlue : Color.LightGray;
+                    break;
+                case "ia":
+                    if (Project.Data.GetIndirectAddr(offset) > 0 /*&& Project.Data.GetFlag(offset) != Data.FlagType.Operand*/) style.ForeColor = Color.Red;
+                    break;
+            }
+
+            cell.PaintBackground(cell.CellBounds, true);
+            if (sia >= 0)
+            {
+                if (column == "pc" && ((sia > selOffset && offset < sia && offset > selOffset) || (sia < selOffset && offset > sia && offset <= selOffset)))
+                    cell.Graphics.DrawLine(new Pen(Color.DeepPink, 2F), cell.CellBounds.Right - 2, cell.CellBounds.Top, cell.CellBounds.Right - 2, cell.CellBounds.Bottom);
+                if (((sia >= 0 && selOffset == offset-1) || (ia >= 0 && ia == offset)) && column_index > ColumnIndex("pc") && column_index <= ColumnIndex("ia"))
+                    cell.Graphics.DrawLine(Pens.DeepPink, cell.CellBounds.Left, cell.CellBounds.Top, cell.CellBounds.Right, cell.CellBounds.Top);
+                
+            }
+            
+            cell.Paint(cell.ClipBounds, DataGridViewPaintParts.ContentForeground);
+            cell.Handled = true;
         }
+        private void ToggleMenuShortcuts(bool enable)
+        {
+            for (int x = 0; x < editToolStripMenuItem.DropDownItems.Count; x++)
+                editToolStripMenuItem.DropDownItems[x].Enabled = enable;
+        }
+        private void table_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e) => ToggleMenuShortcuts(false);
+        private void table_CellEndEdit(object sender, DataGridViewCellEventArgs e) => ToggleMenuShortcuts(true);
 
         private void table_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             int row = e.RowIndex + ViewOffset;
             if (row < 0 || row >= Project.Data.GetRomSize()) return;
-            PaintCell(row, e.CellStyle, e.ColumnIndex, SelectedOffset);
+            PaintCell(row, e.CellStyle, e.ColumnIndex, LastOffset, e);
         }
 
-        public void ShowReferences(int offset, int level = 0)
+        public void ShowReferences(int offset, bool pc = true, bool clear = true)
         {
-            if (offset < 0) return;
+            //if (offset < 0) return;
 
-            int snes = Project.Data.ConvertPCtoSnes(offset), ia = -1;
+            int snes = pc ? Project.Data.ConvertPCtoSnes(offset) : offset, ia = -1;
             referenceView.BeginUpdate();
-            if(level == 0) referenceView.Nodes.Clear();
+            if(clear) referenceView.Nodes.Clear();
 
             TreeNode tn = referenceView.Nodes.Add(Util.NumberToBaseString(snes, Util.NumberBase.Hexadecimal, 6) + "  " + Project.Data.GetLabelName(snes));
-            tn.Tag = offset;
-            level = tn.Index;
-            if (offset == SelectedOffset) referenceView.SelectedNode = tn;
+            tn.Tag = Project.Data.ConvertSnesToPc(snes);
+            int level = tn.Index;
+            if ((int) tn.Tag == SelectedOffset) referenceView.SelectedNode = tn;
 
             for (int x = 0; x < Project.Data.GetRomSize(); x++)
             {
                 //if (Project.Data.GetFlag(x) != Data.FlagType.Opcode) continue;
                 ia = Project.Data.GetIntermediateAddressOrPointer(x);
-                if (ia == snes)
+                if (ia == snes && Project.Data.GetFlag(x) != Data.FlagType.Operand)
                 {
-                    tn = referenceView.Nodes[level].Nodes.Add(Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(x), Util.NumberBase.Hexadecimal, 6) + ": " + Project.Data.GetInstruction(x,true));
+                    tn = referenceView.Nodes[level].Nodes.Add(Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(x), Util.NumberBase.Hexadecimal, 6) + ": " + Project.Data.GetInstruction(x,true).Truncate(100));
                     tn.Tag = x;
+                    if (referenceView.SelectedNode == null && x == SelectedOffset)
+                        referenceView.SelectedNode = tn;
                 }
-                if (referenceView.SelectedNode == null && x == SelectedOffset) referenceView.SelectedNode = tn;
             }
             if (referenceView.Nodes[level].GetNodeCount(false) == 0) referenceView.Nodes[level].Remove();
 
-            ia = Project.Data.GetIntermediateAddressOrPointer(offset);
-            if (ia >= 0 && level == 0)
-            {
-                ShowReferences(Project.Data.ConvertSnesToPc(ia), 1);
-            }
+            ia = pc && offset >= 0 ? Project.Data.GetIntermediateAddressOrPointer(offset) : -1;
+            if (ia >= 0)
+                ShowReferences(ia, false, false);
+
             referenceView.ExpandAll();
             referenceView.EndUpdate();
-            referenceView.Update();
+            if(referenceView.SelectedNode != null)
+                referenceView.SelectedNode.EnsureVisible();
         }
 
         public void SelectOffset(int offset, int column = -1, bool record = true)
         {
-            if (offset < 0) return;
+            if (offset < 0 || offset >= Project.Data.GetRomSize()) return;
 
             if (record)
             {
+                historyView.BeginUpdate();
+                TreeNode tn;
                 if (historyView.Nodes.Count > 100) historyView.Nodes.RemoveAt(0);
                 if (historyView.SelectedNode != null)
                     for (int x = historyView.Nodes.Count-1; x > historyView.SelectedNode.Index; x--) historyView.Nodes[x].Remove();
-                TreeNode tn = historyView.Nodes.Add(Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6) + ": " + Project.Data.GetInstruction(offset, true));
+                if (historyView.SelectedNode == null || (int) historyView.SelectedNode.Tag != SelectedOffset)
+                {
+                    tn = historyView.Nodes.Add(Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(SelectedOffset), Util.NumberBase.Hexadecimal, 6) + ": " + Project.Data.GetInstruction(SelectedOffset, true).Truncate(100));
+                    tn.Tag = SelectedOffset;
+                }
+                tn = historyView.Nodes.Add(Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6) + ": " + Project.Data.GetInstruction(offset, true).Truncate(100));
                 tn.Tag = offset;
                 historyView.SelectedNode = tn;
                 if(findReferencesWithStep) ShowReferences(offset);
+                if (historyView.SelectedNode != null) 
+                    historyView.SelectedNode.EnsureVisible();
+                historyView.EndUpdate();
             }
 
             var col = column == -1 ? LastColumn : column;
@@ -424,6 +482,9 @@ namespace DiztinGUIsh.window
             table.CellValueNeeded += new DataGridViewCellValueEventHandler(table_CellValueNeeded);
             table.CellValuePushed += new DataGridViewCellValueEventHandler(table_CellValuePushed);
             table.CellPainting += new DataGridViewCellPaintingEventHandler(table_CellPainting);
+            table.CellBeginEdit += new DataGridViewCellCancelEventHandler(table_CellBeginEdit);
+            table.CellEndEdit += new DataGridViewCellEventHandler(table_CellEndEdit);
+
 
             rowsToShow = ((table.Height - table.ColumnHeadersHeight) / table.RowTemplate.Height);
 

@@ -135,7 +135,7 @@ namespace DiztinGUIsh.window
             return true;
         }
 
-        private MarkManyDialog PromptMarkMany(int offset, int column)
+        private MarkManyDialog PromptMarkMany(int offset, string column)
         {
             var mark = new MarkManyDialog(offset, column, Project.Data);
             return mark.ShowDialog() == DialogResult.OK ? mark : null;

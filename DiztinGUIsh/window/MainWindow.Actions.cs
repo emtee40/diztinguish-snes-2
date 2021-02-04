@@ -1,7 +1,9 @@
 ﻿using Diz.Core.model;
 using Diz.Core.util;
 using DiztinGUIsh.Properties;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace DiztinGUIsh.window
 {
@@ -19,6 +21,9 @@ namespace DiztinGUIsh.window
             Document.LastProjectFilename = "";
 
             ProjectController.OpenProject(projectToOpen);
+            
+            labelView.RowCount = Project.Data.Labels.Count+1;
+            labelView.Invalidate();
         }
 
         private void OpenProject()
@@ -115,9 +120,9 @@ namespace DiztinGUIsh.window
             UpdateUI_Tmp3();
         }
 
-        private void MarkMany(int offset, int column)
+        private void MarkMany(int offset, string column)
         {
-            if (!RomDataPresent()) 
+            if (!RomDataPresent() || table.IsCurrentCellInEditMode) 
                 return;
             
             var mark = PromptMarkMany(offset, column);
@@ -138,7 +143,8 @@ namespace DiztinGUIsh.window
                 2 => Project.Data.MarkDirectPage(markStart, (int) markValue, markCount, markUnreachedOnly),
                 3 => Project.Data.MarkMFlag(markStart, (bool) markValue, markCount, markUnreachedOnly),
                 4 => Project.Data.MarkXFlag(markStart, (bool) markValue, markCount, markUnreachedOnly),
-                5 => Project.Data.MarkArchitecture(markStart, (Data.Architecture) markValue, markCount, markUnreachedOnly),
+                5 => Project.Data.MarkBaseAddr(markStart, (int)markValue, markCount, markUnreachedOnly),
+                6 => Project.Data.MarkArchitecture(markStart, (Data.Architecture) markValue, markCount, markUnreachedOnly),
                 _ => 0
             };
 
@@ -261,20 +267,23 @@ namespace DiztinGUIsh.window
                     {
                         while (++offset < Project.Data.GetRomSize() && Project.Data.GetFlag(offset) == flag) continue;
                         while (++offset < Project.Data.GetRomSize() && Project.Data.GetFlag(offset) != flag) continue;
-                    } else {
+                    }
+                    else
+                    {
                         while (--offset >= 0 && Project.Data.GetFlag(offset) != flag) continue;
                         while (--offset >= 0 && Project.Data.GetFlag(offset) == flag) continue;
                         offset++;
                     }
-                    return offset == Project.Data.GetRomSize() ? -1 : offset;
                 }
-
-                while ((offset += direction) > 0 && offset < Project.Data.GetRomSize())
+                else
                 {
-                    current = Project.Data.GetFlag(offset);
-                    if (flag == Data.FlagType.Opcode && current == Data.FlagType.Operand) continue;
-                    if (flag == Data.FlagType.Operand && current == Data.FlagType.Opcode) continue;
-                    if (flag != current) break;
+                    while ((offset += direction) > 0 && offset < Project.Data.GetRomSize())
+                    {
+                        current = Project.Data.GetFlag(offset);
+                        if (flag == Data.FlagType.Opcode && current == Data.FlagType.Operand) continue;
+                        if (flag == Data.FlagType.Operand && current == Data.FlagType.Opcode) continue;
+                        if (flag != current) break;
+                    }
                 }
 
             }
@@ -282,7 +291,7 @@ namespace DiztinGUIsh.window
             {
                 ShowError(exception.Message);
             }
-            return offset;
+            return offset >= 0 && offset < Project.Data.GetRomSize() ? offset : -1;
         }
     }
 }

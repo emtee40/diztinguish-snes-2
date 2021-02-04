@@ -1,7 +1,9 @@
 ﻿using Diz.Core.export;
 using Diz.Core.model;
+using Diz.Core.util;
 using DiztinGUIsh.controller;
 using DiztinGUIsh.Properties;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace DiztinGUIsh.window
@@ -23,6 +25,7 @@ namespace DiztinGUIsh.window
         private void Init()
         {
             InitMainTable();
+
 
             AliasList = new AliasList(this);
 
@@ -131,9 +134,27 @@ namespace DiztinGUIsh.window
                 case 11: return Data.FlagType.Data32Bit;
                 case 12: return Data.FlagType.Pointer32Bit;
                 case 13: return Data.FlagType.Text;
+                case 14: return Data.FlagType.Binary;
                 case 0: default: return Data.FlagType.Unreached;
             }
         }
 
+        private void labelView_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
+        {
+            int i = 0;
+            foreach (int addr in Project.Data.Labels.Keys)
+            {
+                if(e.RowIndex == i++)
+                {
+                    e.Value = e.ColumnIndex switch
+                    {
+                        1 => Project.Data.Labels[addr].Name,
+                        2 => Project.Data.Labels[addr].Comment,
+                        _ => Util.NumberToBaseString(addr, Util.NumberBase.Hexadecimal, 6)
+                    };
+
+                }
+            }
+        }
     }
 }

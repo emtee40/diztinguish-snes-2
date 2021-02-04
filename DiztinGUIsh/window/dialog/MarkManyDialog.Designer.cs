@@ -69,7 +69,8 @@
             "Data Bank",
             "Direct Page",
             "M Flag",
-            "X Flag"});
+            "X Flag",
+            "Base Address"});
             this.property.Location = new System.Drawing.Point(115, 10);
             this.property.Name = "property";
             this.property.Size = new System.Drawing.Size(121, 21);

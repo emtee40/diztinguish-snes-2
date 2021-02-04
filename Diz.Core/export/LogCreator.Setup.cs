@@ -131,15 +131,6 @@ namespace Diz.Core.export
                 return;
 
             var labelName = Data.GetDefaultLabel(snes);
-            if(Data.GetFlag(pcoffset) == Data.FlagType.Opcode)
-            switch (opcode)
-            {
-                case 0x10: case 0x30: case 0x50: case 0x70: case 0x80:
-                case 0x82: case 0x90: case 0xB0: case 0xD0: case 0xF0:
-                    var operand = Util.NumberToBaseString(pcoffset + 1, Util.NumberBase.Hexadecimal, 1);
-                    labelName = $"b{operand}";
-                    break;
-            }
             AddExtraLabel(snes, new Label() {
                 Name = labelName,
             });

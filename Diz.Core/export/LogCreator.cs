@@ -170,8 +170,8 @@ namespace Diz.Core.export
 
         protected void WriteMainIncludes(int size)
         {
-            WriteSpecial("map");
-            WriteSpecial("empty");
+            Output.WriteLine(GetParameter(0, "%map", 0));
+            //WriteSpecial("empty");
             WriteMainBankIncludes(size);
         }
 
@@ -219,9 +219,10 @@ namespace Diz.Core.export
         {
             SwitchBanksIfNeeded(pointer, ref currentBank);
 
-            WriteBlankLineIfStartingNewParagraph(pointer);
+            //WriteBlankLineIfStartingNewParagraph(pointer);
+            //WriteBaseAddressIfNeeded(pointer);
             WriteTheRealLine(pointer);
-            WriteBlankLineIfEndPoint(pointer);
+            //WriteBlankLineIfEndPoint(pointer);
 
             pointer += GetLineByteLength(pointer);
         }
@@ -268,9 +269,22 @@ namespace Diz.Core.export
         {
             Output.SwitchToBank(thisBank);
 
-            Output.WriteLine(GetLine(pointer, "empty"));
-            Output.WriteLine(GetLine(pointer, "org"));
-            Output.WriteLine(GetLine(pointer, "empty"));
+            //Output.WriteLine(GetLine(pointer, "empty"));
+            Output.WriteLine(GetParameter(pointer, "%org", 0));
+            //Output.WriteLine(GetLine(pointer, "empty"));
+        }
+
+        private void WriteBaseAddressIfNeeded(int pointer)
+        {
+            int baddr = Data.GetBaseAddr(pointer), last_baddr = pointer > 0 ? Data.GetBaseAddr(pointer - 1) : -1;
+            if (Data.ConvertSnesToPc(baddr) < 0 && Data.ConvertSnesToPc(last_baddr) < 0 && ((pointer > 0 && baddr != last_baddr) || (pointer <= 0 && baddr > 0)))
+            {
+                Output.WriteLine(string.Format(baddr > 0 ? "base $" + Util.NumberToBaseString(baddr, Util.NumberBase.Hexadecimal, 6, false) : "base off"));
+                if (baddr > 0 && ExtraLabels.ContainsKey(baddr) && Data.GetLabelName(baddr) != "")
+                {
+                    Output.WriteLine(Data.GetLabelName(pointer) + "_base");
+                }
+            }
         }
 
         protected void WriteLabels(int pointer)
@@ -359,7 +373,7 @@ namespace Diz.Core.export
 
             if (!isSpecial)
                 CheckForErrorsAtLine(offset);
-            
+            line = line.TrimEnd();
             return line;
         }
 
@@ -384,6 +398,7 @@ namespace Diz.Core.export
         {
             int max = 1, step = 1;
             var size = Data.GetRomSize();
+            bool checkbank = true, checkbyte = false;
 
             Data.FlagType flag = Data.GetFlag(offset);
             switch (flag)
@@ -398,9 +413,13 @@ namespace Diz.Core.export
                 case Data.FlagType.Graphics:
                 case Data.FlagType.Music:
                 case Data.FlagType.Text:
+                    max = 0x8000;
+                    break;
                 case Data.FlagType.Empty:
                 case Data.FlagType.Binary:
-                    max = 0x8000;
+                    max = 0xFFFFFF;
+                    checkbank = false;
+                    checkbyte = flag == Data.FlagType.Empty;
                     break;
                 case Data.FlagType.Data16Bit:
                     step = 2;
@@ -432,10 +451,11 @@ namespace Diz.Core.export
             while (
                 min < max &&
                 offset + min < size &&
+                (!checkbyte || Data.GetRomByte(offset + min) == Data.GetRomByte(offset)) &&
                 Data.GetFlag(offset + min) == Data.GetFlag(offset) &&
                 (Data.GetLabelName(Data.ConvertPCtoSnes(offset + min)) == "" || Data.GetFlag(offset) == Data.FlagType.Binary) &&
                 //(Data.GetFlag(offset + min) == Data.FlagType.Text && Data.GetRomByte(offset + min) > 0x00) &&
-                (offset + min) / BankSize == myBank
+                (!checkbank || (offset + min) / BankSize == myBank)
             ) min += step;
             return min;
         }
@@ -470,9 +490,20 @@ namespace Diz.Core.export
             
             var snesOffset = Data.ConvertPCtoSnes(offset); 
             var label = Data.GetLabelName(snesOffset);
+
+
+            int baddr = Data.GetBaseAddr(offset), last_baddr = offset > 0 ? Data.GetBaseAddr(offset - 1) : -1, next_baddr = offset < Data.GetRomSize() ? Data.GetBaseAddr(offset + 1) : -1;
+            if ((last_baddr == baddr || next_baddr == baddr) && Data.ConvertSnesToPc(baddr) < 0 && Data.ConvertSnesToPc(last_baddr) < 0 && ((offset > 0 && baddr != last_baddr) || (offset <= 0 && baddr > 0)))
+            {
+                if (baddr > 0)
+                    Output.WriteLine(label + "_start:\r\nbase $" + Util.NumberToBaseString(baddr, Util.NumberBase.Hexadecimal, 6, false));
+                else
+                    Output.WriteLine("base off" + (last_baddr > 0 ? "\r\n" + Data.GetLabelName(Data.ConvertPCtoSnes(offset - (Data.CalculateBaseAddr(offset - 1) - last_baddr) - 1), true) + "_end:" : ""));
+            }
+
             if (label == null)
                 return "";
-            
+
             LabelsWeVisited.Add(snesOffset);
 
             var noColon = label.Length == 0 || label[0] == '-' || label[0] == '+' || label[0] == '.';
@@ -481,7 +512,7 @@ namespace Diz.Core.export
         }
 
         // trim to length
-        [AssemblerHandler(Token = "code", Length = 37)]
+        [AssemblerHandler(Token = "code", Length = -4)]
         protected string GetCode(int offset, int length)
         {
             var bytes = GetLineByteLength(offset);
@@ -502,6 +533,7 @@ namespace Diz.Core.export
                     var padbyte = Util.NumberToBaseString(Data.GetRomByte(offset), Util.NumberBase.Hexadecimal, 2, false);
                     var pad = Util.NumberToBaseString(Data.ConvertPCtoSnes(offset + bytes), Util.NumberBase.Hexadecimal, 6, false);
                     code = $"padbyte ${padbyte} : pad ${pad}";
+                    if ((offset + bytes) / BankSize != (offset / BankSize)) code = $"check bankcross off : {code} : check bankcross on";
                     break;
                 case Data.FlagType.Graphics:
                 case Data.FlagType.Music:
@@ -513,6 +545,7 @@ namespace Diz.Core.export
                     }
 
                     code = $"incbin {label}.bin";
+                    if ((offset + bytes) / BankSize != (offset / BankSize)) code = $"check bankcross off : {code} : check bankcross on";
                     file = new FileStream(Output.BuildStreamPath($"{label}.bin"), FileMode.Create, FileAccess.Write);
                     while (bytes > 0)
                     {
@@ -544,8 +577,7 @@ namespace Diz.Core.export
                     code = Data.GetFormattedText(offset, bytes);
                     break;
             }
-
-            return string.Format("{0," + (length * -1) + "}", code);
+            return string.Format("{0," + (length < 0 ? length * -1 : 0) + "}{1," + (length > 0 ? length * -1 : 0) + "}", "", code);
         }
 
         [AssemblerHandler(Token = "%org", Length = 37)]

@@ -55,13 +55,15 @@ namespace DiztinGUIsh.window
             GoToUnreached(false, true);
         
         private void markOneToolStripMenuItem_Click(object sender, EventArgs e) => Mark(LastOffset);
-        private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 7);
-        private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 8);
-        private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 9);
+        private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, ColumnName(SelectedColumn));
+        private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, "db");
+        private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, "dp");
 
-        private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 10);
+        private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, "m");
 
-        private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, 11);
+        private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => MarkMany(LastOffset, "x");
+
+        private void setBaseAddrToolStripMenuItem_Click(object sender, System.EventArgs e) => MarkMany(LastOffset, "base");
         private void addCommentToolStripMenuItem_Click(object sender, EventArgs e) => BeginEditingComment();
 
         private void unreachedToolStripMenuItem_Click(object sender, EventArgs e) =>
@@ -120,14 +122,19 @@ namespace DiztinGUIsh.window
         private void historyView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             SelectOffset((int) e.Node.Tag, -1, false);
+            e.Node.EnsureVisible();
 
         }
         private void referenceView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if((int) e.Node.Tag != SelectedOffset)
-                ViewOffset = (int) e.Node.Tag;
-            UpdateDataGridView();
+            int offset = (int)e.Node.Tag;
+            if (offset >= 0 && offset < Project.Data.GetRomSize() && offset != SelectedOffset)
+            {
+                ViewOffset = offset;
+                UpdateDataGridView();
+            }
 
+            e.Node.EnsureVisible();
         }
         private void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBizhawkCDL();
 
@@ -149,6 +156,13 @@ namespace DiztinGUIsh.window
         private void table_MouseWheel(object sender, MouseEventArgs e) => ScrollTableBy(e.Delta);
         private void toolStripSearchNext_Click(object sender, System.EventArgs e) => SelectOffset(SearchOffset(1));
         private void toolStripSearchPrevious_Click(object sender, System.EventArgs e) => SelectOffset(SearchOffset(-1));
+        private void toolStripSearchBox_KeyDown(object sender, KeyEventArgs e) {
+            switch(e.KeyCode)
+            {
+                case Keys.Enter: SelectOffset(SearchOffset(1)); break;
+                case Keys.Escape: table.Focus(); break;
+            }
+        }
 
     }
 }

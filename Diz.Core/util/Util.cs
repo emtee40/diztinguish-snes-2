@@ -17,6 +17,11 @@ namespace Diz.Core.util
         {
             Decimal = 3, Hexadecimal = 2, Binary = 8
         }
+        public static string Truncate(this string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
 
         public static string NumberToBaseString(int v, NumberBase noBase, int d = -1, bool showPrefix = false)
         {

@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.ComponentModel;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Text;
 using Diz.Core.arch;
 using Diz.Core.util;
@@ -91,10 +93,14 @@ namespace Diz.Core.model
         public void SetDirectPage(int i, int dPage) => RomBytes[i].DirectPage = 0xFFFF & dPage;
         public int GetBaseAddr(int i) => RomBytes[i].BaseAddr;
         public void SetBaseAddr(int i, int bAddr) => RomBytes[i].BaseAddr = 0xFFFFFF & bAddr;
+        public int GetIndirectAddr(int i) => RomBytes[i].IndirectAddr;
+        public void SetIndirectAddr(int i, int iAddr) => RomBytes[i].IndirectAddr = 0xFFFFFF & iAddr;
         public bool GetXFlag(int i) => RomBytes[i].XFlag;
         public void SetXFlag(int i, bool x) => RomBytes[i].XFlag = x;
         public bool GetMFlag(int i) => RomBytes[i].MFlag;
         public void SetMFlag(int i, bool m) => RomBytes[i].MFlag = m;
+        public void ToggleMFlag(int i) => RomBytes[i].MFlag = !RomBytes[i].MFlag;
+        public void ToggleXFlag(int i) => RomBytes[i].XFlag = !RomBytes[i].XFlag;
         public int GetMxFlags(int i)
         {
             return (RomBytes[i].MFlag ? 0x20 : 0) | (RomBytes[i].XFlag ? 0x10 : 0);
@@ -104,12 +110,59 @@ namespace Diz.Core.model
             RomBytes[i].MFlag = ((mx & 0x20) != 0);
             RomBytes[i].XFlag = ((mx & 0x10) != 0);
         }
-        public string GetLabelName(int i)
+        public KeyValuePair<int, int> GetBaseAddrOffset(int i)
+        {
+            return new KeyValuePair<int, int>(GetBaseAddr(i), ConvertSnesToPc(GetBaseAddr(i)));
+        }
+        public string GetLabelName(int i, bool def = false)
         {
             if (Labels.TryGetValue(i, out var val))
                 return val?.Name ?? "";
 
-            return "";
+            return def ? GetDefaultLabel(i) : "";
+        }
+        public string GetParentLabel(int offset, int snes)
+        {
+            string label = GetLabelName(snes), prefix = "";
+            int address = ConvertSnesToPc(snes);
+            if (label != "" && label[0] == '.' && address >= 0 && address < GetRomSize() )
+            {
+                /*
+                 
+                900: func
+                930: bra .sub
+                950: .sub
+                990: bra func2.sub2
+                ..
+              - 1000: func2
+                1001: bra func.sub
+              a 1010: .sub1
+                1020: beq .sub2
+                1030: .sub2
+              o 1040: bra .sub1
+                 
+                 */
+                for (int x = address > offset ? address : offset; x > 0; x--)
+                {
+                    // if addr was after offset and we reach our offset, quit
+                    if ((address > offset && x == offset) || (address < offset && x == address)) break;
+
+                    if (GetInOutPoint(x) != InOutPoint.InPoint && GetInOutPoint(x) != InOutPoint.ReadPoint) continue;
+                    // found a point
+
+                    // has defined label?
+                    prefix = GetLabelName(ConvertPCtoSnes(x), true);
+                    if (prefix != "" && prefix[0] != '.' && prefix[0] != '-' && prefix[0] != '+')
+                    {
+                        if ((address > offset && x < address) || (address < offset && x < address))
+                            return prefix + label.Replace('.', '_');
+                        if (address < offset) x = address;
+                    }
+
+                }
+            }
+
+            return GetLabelName(snes);
         }
         public string GetLabelComment(int i)
         {
@@ -191,13 +244,14 @@ namespace Diz.Core.model
                 return GetRomByte(offset) + (GetRomByte(offset + 1) << 8) + (GetRomByte(offset + 2) << 16) + (GetRomByte(offset + 3) << 24);
             return -1;
         }
-        public int GetIntermediateAddressOrPointer(int offset)
+        public int GetIntermediateAddressOrPointer(int offset, bool original = false)
         {
             switch (GetFlag(offset))
             {
                 case FlagType.Unreached:
                 case FlagType.Opcode:
-                    return GetIntermediateAddress(offset, true);
+                case FlagType.Operand:
+                    return GetIntermediateAddress(offset, true, original);
                 case FlagType.Pointer16Bit:
                     int bank = GetDataBank(offset);
                     return (bank << 16) | GetRomWord(offset);
@@ -299,11 +353,12 @@ namespace Diz.Core.model
         }
         public int CalculateBaseAddr(int offset)
         {
-            if (GetBaseAddr(offset) <= 0) return -1;
-            int pos = 0, bank = offset / GetBankSize();
-            while (offset - pos >= 0 && GetBaseAddr(offset - pos) == GetBaseAddr(offset) && bank == offset - pos / GetBankSize())// && GetLabelName(ConvertPCtoSnes(offset - pos)) == "")
-                pos++;
-            return pos;
+            int pos = offset, baddr = GetBaseAddr(offset), bank = offset / GetBankSize();
+            if (baddr <= 0) return -1;
+
+            while (--pos >= 0 && baddr == GetBaseAddr(pos) && bank == (pos / GetBankSize()))// && GetLabelName(ConvertPCtoSnes(offset - pos)) == "")
+                continue;
+            return offset - pos + baddr - 1;
         }
 
         public string GetFormattedText(int offset, int bytes = 0)
@@ -331,8 +386,18 @@ namespace Diz.Core.model
         public string GetDefaultLabel(int snes)
         {
             var pcoffset = ConvertSnesToPc(snes);
-            var prefix = RomUtil.TypeToLabel(GetFlag(pcoffset));
+            var prefix = pcoffset >= 0 ? RomUtil.TypeToLabel(GetFlag(pcoffset)) : "RAM";
             var labelAddress = Util.NumberToBaseString(snes, Util.NumberBase.Hexadecimal, 6);
+
+            /*if(pcoffset >= 0 && GetFlag(pcoffset) == Data.FlagType.Opcode)
+            switch (GetRomByte(pcoffset))
+            {
+                case 0x10: case 0x30: case 0x50: case 0x70: case 0x80:
+                case 0x82: case 0x90: case 0xB0: case 0xD0: case 0xF0:
+                    var operand = Util.NumberToBaseString(snes & 0xFFF, Util.NumberBase.Hexadecimal, 3);
+                    return $".b{operand}";
+                    break;
+            }*/
             return $"{prefix}_{labelAddress}";
         }
 
@@ -460,6 +525,7 @@ namespace Diz.Core.model
         public int MarkTypeFlag(int offset, FlagType type, int count, bool unreachedonly = false) => Mark(i => SetFlag(i, type), offset, count, unreachedonly);
         public int MarkDataBank(int offset, int db, int count, bool unreachedonly = false) => Mark(i => SetDataBank(i, db), offset, count, unreachedonly);
         public int MarkDirectPage(int offset, int dp, int count, bool unreachedonly = false) => Mark(i => SetDirectPage(i, dp), offset, count, unreachedonly);
+        public int MarkBaseAddr(int offset, int addr, int count, bool unreachedonly = false) => Mark(i => SetBaseAddr(i, addr), offset, count, unreachedonly);
         public int MarkXFlag(int offset, bool x, int count, bool unreachedonly = false) => Mark(i => SetXFlag(i, x), offset, count, unreachedonly);
         public int MarkMFlag(int offset, bool m, int count, bool unreachedonly = false) => Mark(i => SetMFlag(i, m), offset, count, unreachedonly);
         public int MarkArchitecture(int offset, Architecture arch, int count, bool unreachedonly = false) => Mark(i => SetArchitecture(i, arch), offset, count, unreachedonly);
@@ -545,12 +611,12 @@ namespace Diz.Core.model
             }
         }
 
-        public int GetIntermediateAddress(int offset, bool resolve = false)
+        public int GetIntermediateAddress(int offset, bool resolve = false, bool original = false)
         {
             // FIX ME: log and generation of dp opcodes. search references
             return GetArchitecture(offset) switch
             {
-                Architecture.Cpu65C816 => cpu65C816.GetIntermediateAddress(offset, resolve),
+                Architecture.Cpu65C816 => cpu65C816.GetIntermediateAddress(offset, resolve, original),
                 Architecture.Apuspc700 => -1,
                 Architecture.GpuSuperFx => -1,
                 _ => -1

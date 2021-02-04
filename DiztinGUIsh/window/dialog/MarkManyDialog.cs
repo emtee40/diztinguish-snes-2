@@ -17,17 +17,18 @@ namespace DiztinGUIsh.window.dialog
 
         private readonly Data data;
 
-        public MarkManyDialog(int offset, int column, Data data)
+        public MarkManyDialog(int offset, string column, Data data)
         {
             InitializeComponent();
             this.data = data;
 
             property.SelectedIndex = column switch
             {
-                8 => 1,
-                9 => 2,
-                10 => 3,
-                11 => 4,
+                "db" => 1,
+                "dp" => 2,
+                "m" => 3,
+                "x" => 4,
+                "base" => 5,
                 _ => 0
             };
             
@@ -53,57 +54,48 @@ namespace DiztinGUIsh.window.dialog
                 switch (property.SelectedIndex)
                 {
                     case 0:
-                        switch (flagCombo.SelectedIndex)
+                        return flagCombo.SelectedIndex switch
                         {
-                            case 0: return Data.FlagType.Unreached;
-                            case 1: return Data.FlagType.Opcode;
-                            case 2: return Data.FlagType.Operand;
-                            case 3: return Data.FlagType.Data8Bit;
-                            case 4: return Data.FlagType.Graphics;
-                            case 5: return Data.FlagType.Music;
-                            case 6: return Data.FlagType.Empty;
-                            case 7: return Data.FlagType.Data16Bit;
-                            case 8: return Data.FlagType.Pointer16Bit;
-                            case 9: return Data.FlagType.Data24Bit;
-                            case 10: return Data.FlagType.Pointer24Bit;
-                            case 11: return Data.FlagType.Data32Bit;
-                            case 12: return Data.FlagType.Pointer32Bit;
-                            case 13: return Data.FlagType.Text;
-                            case 14: return Data.FlagType.Binary;
-                        }
-
-                        break;
-                    case 1:
-                    case 2:
-                        return value;
+                            1 => Data.FlagType.Opcode,
+                            2 => Data.FlagType.Operand,
+                            3 => Data.FlagType.Data8Bit,
+                            4 => Data.FlagType.Graphics,
+                            5 => Data.FlagType.Music,
+                            6 => Data.FlagType.Empty,
+                            7 => Data.FlagType.Data16Bit,
+                            8 => Data.FlagType.Pointer16Bit,
+                            9 => Data.FlagType.Data24Bit,
+                            10 => Data.FlagType.Pointer24Bit,
+                            11 => Data.FlagType.Data32Bit,
+                            12 => Data.FlagType.Pointer32Bit,
+                            13 => Data.FlagType.Text,
+                            14 => Data.FlagType.Binary,
+                            _ => Data.FlagType.Unreached
+                        };
                     case 3:
                     case 4:
                         return mxCombo.SelectedIndex != 0;
-                    case 5:
-                        switch (archCombo.SelectedIndex)
+                    case 6:
+                        return archCombo.SelectedIndex switch
                         {
-                            case 0: return Data.Architecture.Cpu65C816;
-                            case 1: return Data.Architecture.Apuspc700;
-                            case 2: return Data.Architecture.GpuSuperFx;
-                        }
-
-                        break;
+                            1 => Data.Architecture.Apuspc700,
+                            2 => Data.Architecture.GpuSuperFx,
+                            _ => Data.Architecture.Cpu65C816
+                        };
                     default:
-                        return 0;
+                        return value;
                 }
-                
-                return 0;
             }
         }
 
         private void UpdateGroup()
         {
             flagCombo.Visible = (property.SelectedIndex == 0);
-            regValue.Visible = (property.SelectedIndex == 1 || property.SelectedIndex == 2);
+            regValue.Visible = (property.SelectedIndex == 1 || property.SelectedIndex == 2 || property.SelectedIndex == 5);
             mxCombo.Visible = (property.SelectedIndex == 3 || property.SelectedIndex == 4);
-            archCombo.Visible = (property.SelectedIndex == 5);
-            regValue.MaxLength = (property.SelectedIndex == 1 ? 3 : 5);
-            value = property.SelectedIndex == 1 ? data.GetDataBank(Start) : data.GetDirectPage(Start);
+            archCombo.Visible = (property.SelectedIndex == 6);
+            regValue.MaxLength = (property.SelectedIndex == 1 ? 3 : property.SelectedIndex == 5 ? 7 : 5);
+            value = property.SelectedIndex == 1 ? data.GetDataBank(Start) : property.SelectedIndex == 5 ? data.GetBaseAddr(Start) : data.GetDirectPage(Start);
         }
 
         private bool updatingText;
@@ -113,7 +105,7 @@ namespace DiztinGUIsh.window.dialog
             Util.NumberBase noBase = radioDec.Checked ? Util.NumberBase.Decimal : Util.NumberBase.Hexadecimal;
             int digits = noBase == Util.NumberBase.Hexadecimal && radioROM.Checked ? 6 : 0;
             int size = data.GetRomSize();
-            int maxValue = property.SelectedIndex == 1 ? 0x100 : 0x10000;
+            int maxValue = property.SelectedIndex == 1 ? 0x100 : property.SelectedIndex == 5 ? 0x1000000 : 0x10000;
 
             if (Start < 0) Start = 0;
             if (End >= size) End = size - 1;

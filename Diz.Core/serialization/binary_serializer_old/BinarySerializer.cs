@@ -74,14 +74,14 @@ namespace Diz.Core.serialization.binary_serializer_old
 
             project.Data.RomBytes.Create(size);
 
-            for (int i = 0; i < size; i++) project.Data.SetDataBank(i, data[pointer + i]);
-            for (int i = 0; i < size; i++) project.Data.SetDirectPage(i, data[pointer + size + i] | (data[pointer + 2 * size + i] << 8));
-            for (int i = 0; i < size; i++) project.Data.SetXFlag(i, data[pointer + 3 * size + i] != 0);
-            for (int i = 0; i < size; i++) project.Data.SetMFlag(i, data[pointer + 4 * size + i] != 0);
-            for (int i = 0; i < size; i++) project.Data.SetFlag(i, (Data.FlagType)data[pointer + 5 * size + i]);
-            for (int i = 0; i < size; i++) project.Data.SetArchitecture(i, (Data.Architecture)data[pointer + 6 * size + i]);
-            for (int i = 0; i < size; i++) project.Data.SetInOutPoint(i, (Data.InOutPoint)data[pointer + 7 * size + i]);
-            pointer += 8 * size;
+            for (int i = 0; i < size; i++) project.Data.SetDataBank(i, data[pointer + i]); pointer++;
+            for (int i = 0; i < size; i++) project.Data.SetDirectPage(i, data[pointer + size + i] | (data[pointer + 1 * size + i] << 8)); pointer += 2;
+            for (int i = 0; i < size; i++) project.Data.SetXFlag(i, data[pointer * size + i] != 0); pointer++;
+            for (int i = 0; i < size; i++) project.Data.SetMFlag(i, data[pointer * size + i] != 0); pointer++;
+            for (int i = 0; i < size; i++) project.Data.SetFlag(i, (Data.FlagType)data[pointer * size + i]); pointer++;
+            for (int i = 0; i < size; i++) project.Data.SetArchitecture(i, (Data.Architecture)data[pointer * size + i]); pointer++;
+            for (int i = 0; i < size; i++) project.Data.SetInOutPoint(i, (Data.InOutPoint)data[pointer * size + i]); pointer++;
+            //for (int i = 0; i < size; i++) project.Data.SetBaseAddr(i, (Data.InOutPoint)data[pointer * size + i]); pointer++;
 
             ReadLabels(project, data, ref pointer, converter, version >= 2);
             ReadComments(project, data, ref pointer, converter);
@@ -174,6 +174,9 @@ namespace Diz.Core.serialization.binary_serializer_old
                 i => (byte)project.Data.GetFlag(i),
                 i => (byte)project.Data.GetArchitecture(i),
                 i => (byte)project.Data.GetInOutPoint(i),
+                //i => (byte)project.Data.GetBaseAddr(i),
+                //i => (byte)(project.Data.GetBaseAddr(i) >> 8),
+                //i => (byte)(project.Data.GetBaseAddr(i) >> 16),
             };
 
             void ReadOperation(int startIdx, int whichOp)
@@ -194,7 +197,8 @@ namespace Diz.Core.serialization.binary_serializer_old
                 var start = romSettings.Length + romLocation.Length;
                 ReadOperation(start, i);
             }
-            
+
+            Console.WriteLine(readOps.Count());
             // ???
             label.CopyTo(data, romSettings.Length + romLocation.Length + 8 * size);
             comment.CopyTo(data, romSettings.Length + romLocation.Length + 8 * size + label.Count);

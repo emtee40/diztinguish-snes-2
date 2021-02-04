@@ -36,11 +36,12 @@ namespace Diz.Core.serialization.xml_serializer
             new FlagEncodeEntry() {F = Data.FlagType.Pointer16Bit, C = 'E'},
             new FlagEncodeEntry() {F = Data.FlagType.Pointer24Bit, C = 'F'},
             new FlagEncodeEntry() {F = Data.FlagType.Pointer32Bit, C = 'G'},
+            new FlagEncodeEntry() {F = Data.FlagType.Binary, C = 'H'},
         };
 
         private readonly StringBuilder cachedPadSb = new StringBuilder(LineMaxLen);
 
-        private const int LineMaxLen = 9;
+        private const int LineMaxLen = 21;
 
         // note: performance-intensive function. be really careful when adding stuff here.
         public RomByte DecodeRomByte(string line)
@@ -54,10 +55,12 @@ namespace Diz.Core.serialization.xml_serializer
             newByte.DataBank = ByteUtil.ByteParseHex2(input[2], input[3]);
             newByte.DirectPage = (int)ByteUtil.ByteParseHex4(input[4], input[5], input[6], input[7]);
             newByte.Arch = (Data.Architecture)(ByteUtil.ByteParseHex1(input[8]) & 0x3);
+            newByte.BaseAddr = (int)ByteUtil.ByteParseHex6(input[9], input[10], input[11], input[12], input[13], input[14]);
+            newByte.IndirectAddr = (int)ByteUtil.ByteParseHex6(input[15], input[16], input[17], input[18], input[19], input[20]);
 
-            #if EXTRA_DEBUG_CHECKS
+#if EXTRA_DEBUG_CHECKS
             Debug.Assert(Fake64Encoding.EncodeHackyBase64(otherFlags1) == o1_str);
-            #endif
+#endif
 
             newByte.XFlag = ((otherFlags1 >> 2) & 0x1) != 0;
             newByte.MFlag = ((otherFlags1 >> 3) & 0x1) != 0;
@@ -83,9 +86,9 @@ namespace Diz.Core.serialization.xml_serializer
         private StringBuilder PrepLine(string line)
         {
             if (cachedPadSb.Length == 0)
-                cachedPadSb.Append("000000000"); // any 9 chars
+                cachedPadSb.Append("000000000000000000000"); // any 21 chars
 
-            // light decompression. ensure our line is always 9 chars long.
+            // light decompression. ensure our line is always 21 chars long.
             // if any characters are missing, pad them with zeroes
             //
             // perf: string.PadRight() is simpler but too slow, so do it by hand
@@ -152,14 +155,16 @@ namespace Diz.Core.serialization.xml_serializer
             var o2Str = otherFlags2.ToString("X1"); Debug.Assert(o2Str.Length == 1);
 
             // ordering: put DB and D on the end, they're likely to be zero and compressible
-            var sb = new StringBuilder(9);
+            var sb = new StringBuilder(21);
             sb.Append(flagTxt);
             sb.Append(o1Str);
             sb.Append(instance.DataBank.ToString("X2"));
             sb.Append(instance.DirectPage.ToString("X4"));
             sb.Append(o2Str);
+            sb.Append(instance.BaseAddr.ToString("X6"));
+            sb.Append(instance.IndirectAddr.ToString("X6"));
 
-            Debug.Assert(sb.Length == 9);
+            //Debug.Assert(sb.Length == 21);
             var data = sb.ToString();
 
             // light compression: chop off any trailing zeroes.
