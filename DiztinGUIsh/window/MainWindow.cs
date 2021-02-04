@@ -27,8 +27,6 @@ namespace DiztinGUIsh.window
             InitMainTable();
 
 
-            AliasList = new AliasList(this);
-
             UpdatePanels();
             UpdateUiFromSettings();
 
@@ -156,5 +154,6 @@ namespace DiztinGUIsh.window
                 }
             }
         }
+
     }
 }

@@ -216,12 +216,6 @@ namespace DiztinGUIsh.window
             visualForm ??= new VisualizerForm(this);
             visualForm.Show();
         }
-
-        private void ShowCommentList()
-        {
-            AliasList.Show();
-        }
-
         private void SetMarkerLabel(Data.FlagType flagType)
         {
             markFlag = flagType;

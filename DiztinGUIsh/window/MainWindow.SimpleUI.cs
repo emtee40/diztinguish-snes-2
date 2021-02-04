@@ -107,7 +107,6 @@ namespace DiztinGUIsh.window
         private void fixMisalignedInstructionsToolStripMenuItem_Click(object sender, EventArgs e) =>
             FixMisalignedInstructions();
 
-        private void labelListToolStripMenuItem_Click(object sender, EventArgs e) => ShowCommentList();
 
         private void openLastProjectAutomaticallyToolStripMenuItem_Click(object sender, EventArgs e) =>
             SaveSettings();

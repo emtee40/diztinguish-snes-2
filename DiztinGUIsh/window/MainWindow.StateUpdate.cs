@@ -14,7 +14,7 @@ namespace DiztinGUIsh.window
     {
         private void RebindProject()
         {
-            AliasList?.RebindProject();
+            LabelsRebindProject();
             if (visualForm != null) 
                 visualForm.Project = Project;
         }
@@ -115,7 +115,7 @@ namespace DiztinGUIsh.window
 
         private void EnableSubWindows()
         {
-            labelListToolStripMenuItem.Enabled = true;
+            //labelListToolStripMenuItem.Enabled = true;
         }
 
         public void UpdateSaveOptionStates(bool saveEnabled, bool saveAsEnabled, bool closeEnabled)

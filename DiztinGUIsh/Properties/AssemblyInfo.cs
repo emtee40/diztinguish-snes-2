@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DiztinGUIsh")]
 [assembly: AssemblyDescription("A Super NES ROM disassembler.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Written by Alex \"Dotsarecool\" Losego, Dominic \"binary1230\" Cerquetti")]
+[assembly: AssemblyCompany("Written by Alex \"Dotsarecool\" Losego, Dominic \"binary1230\" Cerquetti, Matheus \"FURiOUS\" Furtado")]
 [assembly: AssemblyProduct("DiztinGUIsh")]
 [assembly: AssemblyCopyright("Copyright © 2020")]
 [assembly: AssemblyTrademark("")]
