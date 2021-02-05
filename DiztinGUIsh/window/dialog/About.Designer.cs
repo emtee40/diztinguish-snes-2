@@ -74,7 +74,7 @@
             this.logoPictureBox.Margin = new System.Windows.Forms.Padding(0);
             this.logoPictureBox.Name = "logoPictureBox";
             this.tableLayoutPanel.SetRowSpan(this.logoPictureBox, 7);
-            this.logoPictureBox.Size = new System.Drawing.Size(256, 326);
+            this.logoPictureBox.Size = new System.Drawing.Size(256, 331);
             this.logoPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.logoPictureBox.TabIndex = 12;
             this.logoPictureBox.TabStop = false;
@@ -135,7 +135,7 @@
             this.textBoxDescription.Name = "textBoxDescription";
             this.textBoxDescription.ReadOnly = true;
             this.textBoxDescription.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxDescription.Size = new System.Drawing.Size(411, 189);
+            this.textBoxDescription.Size = new System.Drawing.Size(411, 195);
             this.textBoxDescription.TabIndex = 4;
             this.textBoxDescription.TabStop = false;
             this.textBoxDescription.Text = "Description";
@@ -144,7 +144,7 @@
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.okButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.okButton.Location = new System.Drawing.Point(590, 300);
+            this.okButton.Location = new System.Drawing.Point(590, 305);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(80, 23);
             this.okButton.TabIndex = 5;
