@@ -26,6 +26,7 @@ namespace DiztinGUIsh.window
         private void labelView_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (ModifierKeys != Keys.Alt) return;
+            if (labelView.IsCurrentCellInEditMode) labelView.CancelEdit();
 
             if (!int.TryParse((string) labelView.SelectedRows[0].Cells[0].Value, NumberStyles.HexNumber, null,
                 out var val)) return;
@@ -33,6 +34,8 @@ namespace DiztinGUIsh.window
             var offset = Project.Data.ConvertSnesToPc(val);
             if (offset >= 0)
                 SelectOffset(offset);
+            else
+                ShowReferences(val, false, true);
         }
 
         private static void SplitOnFirstComma(string instr, out string firstPart, out string remainder)
@@ -150,10 +153,12 @@ namespace DiztinGUIsh.window
         private void labelView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
             if (labelView.Rows[e.RowIndex].IsNewRow) return;
-            var val = -1;
-            int.TryParse((string)labelView.Rows[e.RowIndex].Cells[0].Value, NumberStyles.HexNumber, null, out var oldAddress);
+            if (labelView.Rows[e.RowIndex].Cells[0].Value == "") return;
 
-            var labelLabel = new Label
+            int val = -1, oldAddress = -1;
+            int.TryParse((string)labelView.Rows[e.RowIndex].Cells[0].Value, NumberStyles.HexNumber, null, out oldAddress);
+
+            var label = new Label
             {
                 Name = (string) labelView.Rows[e.RowIndex].Cells[1].Value,
                 Comment = (string)labelView.Rows[e.RowIndex].Cells[2].Value,
@@ -164,44 +169,48 @@ namespace DiztinGUIsh.window
             switch (e.ColumnIndex)
             {
                 case 0:
+                    if (!int.TryParse(e.FormattedValue.ToString(), NumberStyles.HexNumber, null, out val))
                     {
-                        if (!int.TryParse(e.FormattedValue.ToString(), NumberStyles.HexNumber, null, out val))
+                        e.Cancel = true;
+                        //toolStripStatusLabel1.Text = "Must enter a valid hex address.";
+                    }
+                    else if (oldAddress == -1 && Project.Data.Labels.ContainsKey(val))
+                    {
+                        e.Cancel = true;
+                        foreach (DataGridViewRow row in labelView.Rows)
                         {
-                            e.Cancel = true;
-                            //toolStripStatusLabel1.Text = "Must enter a valid hex address.";
-                        } else if (oldAddress == -1 && Project.Data.Labels.ContainsKey(val))
-                        {
-                            e.Cancel = true;
-                            //toolStripStatusLabel1.Text = "This address already has a label.";
-
-                            Console.WriteLine(Util.NumberToBaseString(val, Util.NumberBase.Hexadecimal));
-                        } else if (labelView.EditingControl != null)
-                        {
-                            labelView.EditingControl.Text = Util.NumberToBaseString(val, Util.NumberBase.Hexadecimal, 6);
+                            if (row.Cells[0].Value.ToString().Equals(e.FormattedValue.ToString().ToUpper()))
+                            {
+                                labelView.CurrentCell = row.Cells[0];
+                                break;
+                            }
                         }
-                        break;
+                        //toolStripStatusLabel1.Text = "This address already has a label.";
+
+                        Console.WriteLine(Util.NumberToBaseString(val, Util.NumberBase.Hexadecimal));
                     }
+                    else if (labelView.EditingControl != null)
+                    {
+                        labelView.EditingControl.Text = Util.NumberToBaseString(val, Util.NumberBase.Hexadecimal, 6);
+                    }
+                    break;
                 case 1:
-                    {
-                        val = oldAddress;
-                        labelLabel.Name = e.FormattedValue.ToString();
-                        // todo (validate for valid label characters)
-                        break;
-                    }
+                    val = oldAddress;
+                    label.Name = e.FormattedValue.ToString();
+                    // todo (validate for valid label characters)
+                    break;
                 case 2:
-                    {
-                        val = oldAddress;
-                        labelLabel.Comment = e.FormattedValue.ToString();
-                        // todo (validate for valid comment characters, if any)
-                        break;
-                    }
+                    val = oldAddress;
+                    label.Comment = e.FormattedValue.ToString();
+                    // todo (validate for valid comment characters, if any)
+                    break;
             }
 
             Locked = true;
             if (currentlyEditing >= 0)
             {
                 if (val >= 0) Project.Data.AddLabel(oldAddress, null, true);
-                Project.Data.AddLabel(val, labelLabel, true);
+                Project.Data.AddLabel(val, label, true);
             }
             Locked = false;
 
@@ -267,13 +276,26 @@ namespace DiztinGUIsh.window
             ImportLabelsFromCsv(true);
         }
 
+        public void labelView_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex > 0 && int.TryParse(labelView.Rows[e.RowIndex].Cells[0].FormattedValue.ToString(), NumberStyles.HexNumber, null, out int row)) 
+            {
+                row = Project.Data.ConvertSnesToPc(row);
+                if (row < 0 || row >= Project.Data.GetRomSize()) return;
+                PaintCell(row, e.CellStyle, 5, 0, e);
+            }
+            e.Handled = false;
+        }
+
         public void LabelsRebindProject()
         {
             RepopulateFromData();
 
             labelView.CellValidating += labelView_CellValidating;
             labelView.CellBeginEdit += labelView_CellBeginEdit;
+            labelView.CellClick += labelView_CellClick;
             labelView.UserDeletingRow += labelView_UserDeletingRow;
+            labelView.CellPainting += labelView_CellPainting;
             labelView.Sort(labelView.Columns[0], ListSortDirection.Ascending);
             //labelView.UserDeletingRow += labelView_UserDeletingRow;
 

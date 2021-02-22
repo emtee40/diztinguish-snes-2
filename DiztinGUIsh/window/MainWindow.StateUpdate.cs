@@ -75,7 +75,9 @@ namespace DiztinGUIsh.window
                 if (Project.Data.GetFlag(i) == Data.FlagType.Unreached)
                     totalUnreached++;
             int reached = size - totalUnreached;
-            percentComplete.Text = $"{reached * 100.0 / size:N3}% ({reached:D}/{size:D})";
+            percentComplete.Text = $"{(float) reached * 100 / size:N3}% ({reached:D}/{size:D})";
+            progressbarComplete.Maximum = size;
+            progressbarComplete.Value = reached;
         }
 
         public void UpdateMarkerLabel()
@@ -127,14 +129,7 @@ namespace DiztinGUIsh.window
             exportLogToolStripMenuItem.Enabled = true;
         }
 
-        private void UpdateSomeUI2()
-        {
-            // refactor this somewhere else
-            UpdateUI_Tmp3();
-            //InvalidateTable();
-        }
-
-        private void UpdateUI_Tmp3()
+        private void UpdateUI()
         {
             // refactor this somewhere else
             UpdatePercent();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Diz.Core.model;
+using Diz.Core.arch;
 using Diz.Core.util;
 using IX.Observable;
 
@@ -184,6 +185,7 @@ namespace Diz.Core.export
                 Output.WriteLine(GetLine(i, "incsrc"));
 
             Output.WriteLine(GetLine(-1, "incsrc"));
+            Output.WriteLine(GetLine(-2, "incsrc"));
         }
 
         protected void SetupParseList()
@@ -292,11 +294,12 @@ namespace Diz.Core.export
             var unvisitedLabels = GetUnvisitedLabels();
             WriteAnyUnivisitedLabels(pointer, unvisitedLabels);
             PrintAllLabelsIfRequested(pointer, unvisitedLabels);
+            WriteRegisterLabels(pointer);
         }
 
-        private Dictionary<int, Label> GetUnvisitedLabels()
+        private SortedDictionary<int, Label> GetUnvisitedLabels()
         {
-            var unvisitedLabels = new Dictionary<int, Label>();
+            var unvisitedLabels = new SortedDictionary<int, Label>();
 
             // part 1: important: include all labels we aren't defining somewhere else. needed for disassembly
             foreach (var pair in Data.Labels)
@@ -311,15 +314,22 @@ namespace Diz.Core.export
             return unvisitedLabels;
         }
 
-        private void WriteAnyUnivisitedLabels(int pointer, Dictionary<int, Label> unvisitedLabels)
+        private void WriteAnyUnivisitedLabels(int pointer, SortedDictionary<int, Label> unvisitedLabels)
         {
             SwitchOutputStream(pointer, "labels");
 
             foreach (var pair in unvisitedLabels)
-                Output.WriteLine(GetLine(pair.Key, "labelassign"));
+                Output.WriteLine(GetParameter(pair.Key, "%labelassign", 0));
+        }
+        private void WriteRegisterLabels(int pointer)
+        {
+            SwitchOutputStream(pointer, "registers");
+
+            foreach (var pair in Cpu65C816.Registers)
+                Output.WriteLine(GetParameter(pair.Key, "%labelassign", 0));
         }
 
-        private void PrintAllLabelsIfRequested(int pointer, Dictionary<int, Label> unvisitedLabels)
+        private void PrintAllLabelsIfRequested(int pointer, SortedDictionary<int, Label> unvisitedLabels)
         {
             // part 2: optional: if requested, print all labels regardless of use.
             // Useful for debugging, documentation, or reverse engineering workflow.
@@ -398,7 +408,7 @@ namespace Diz.Core.export
         {
             int max = 1, step = 1;
             var size = Data.GetRomSize();
-            bool checkbank = true, checkbyte = false;
+            bool checkbank = true, checkbyte = false, checksublabel = false;
 
             Data.FlagType flag = Data.GetFlag(offset);
             switch (flag)
@@ -414,11 +424,13 @@ namespace Diz.Core.export
                 case Data.FlagType.Music:
                 case Data.FlagType.Text:
                     max = 0x8000;
+                    checksublabel = true;
                     break;
                 case Data.FlagType.Empty:
                 case Data.FlagType.Binary:
                     max = 0xFFFFFF;
                     checkbank = false;
+                    checksublabel = true;
                     checkbyte = flag == Data.FlagType.Empty;
                     break;
                 case Data.FlagType.Data16Bit:
@@ -453,7 +465,7 @@ namespace Diz.Core.export
                 offset + min < size &&
                 (!checkbyte || Data.GetRomByte(offset + min) == Data.GetRomByte(offset)) &&
                 Data.GetFlag(offset + min) == Data.GetFlag(offset) &&
-                (Data.GetLabelName(Data.ConvertPCtoSnes(offset + min)) == "" || Data.GetFlag(offset) == Data.FlagType.Binary) &&
+                (Data.GetLabelName(Data.ConvertPCtoSnes(offset + min)) == "" || (checksublabel && Data.GetLabelName(Data.ConvertPCtoSnes(offset + min))[0] == '.') || Data.GetFlag(offset) == Data.FlagType.Binary) &&
                 //(Data.GetFlag(offset + min) == Data.FlagType.Text && Data.GetRomByte(offset + min) > 0x00) &&
                 (!checkbank || (offset + min) / BankSize == myBank)
             ) min += step;
@@ -504,7 +516,8 @@ namespace Diz.Core.export
             if (label == null)
                 return "";
 
-            LabelsWeVisited.Add(snesOffset);
+            //if (!Cpu65C816.Registers.TryGetValue(snesOffset, out Label l))
+                LabelsWeVisited.Add(snesOffset);
 
             var noColon = label.Length == 0 || label[0] == '-' || label[0] == '+' || label[0] == '.';
             var newLine = label.Length > 0 && label[0] == '.';
@@ -607,13 +620,21 @@ namespace Diz.Core.export
         [AssemblerHandler(Token = "%incsrc", Length = 1)]
         protected string GetIncSrc(int offset, int length)
         {
-            string s = "incsrc \"labels.asm\"";
-            if (offset >= 0)
+            string src = "";
+            switch (offset)
             {
-                int bank = Data.ConvertPCtoSnes(offset) >> 16;
-                s = string.Format("incsrc \"bank_{0}.asm\"", Util.NumberToBaseString(bank, Util.NumberBase.Hexadecimal, 2));
+                case -1: src = "incsrc \"labels.asm\""; break;
+                case -2: src = "incsrc \"registers.asm\""; break;
+                default:
+                    if (offset >= 0)
+                    {
+                        int bank = Data.ConvertPCtoSnes(offset) >> 16;
+                        src = string.Format("incsrc \"bank_{0}.asm\"", Util.NumberToBaseString(bank, Util.NumberBase.Hexadecimal, 2));
+                    }
+                    break;
             }
-            return string.Format("{0," + (length * -1) + "}", s);
+
+            return string.Format("{0," + (length * -1) + "}", src);
         }
 
         [AssemblerHandler(Token = "%bankcross", Length = 1)]
@@ -706,7 +727,7 @@ namespace Diz.Core.export
         [AssemblerHandler(Token = "%labelassign", Length = 1)]
         protected string GetLabelAssign(int offset, int length)
         {
-            var labelName = Data.GetLabelName(offset);
+            var labelName = Data.GetParentLabel(0, offset);
             var offsetStr = Util.NumberToBaseString(offset, Util.NumberBase.Hexadecimal, 6, true);
             var labelComment = Data.GetLabelComment(offset);
 
@@ -719,7 +740,7 @@ namespace Diz.Core.export
 
             // TODO: sorry, probably not the best way to stuff this in here, consider putting it in the %comment% section in the future. -Dom
             if (Settings.PrintLabelSpecificComments && labelComment != "")
-                finalCommentText = $"; !^ {labelComment} ^!";
+                finalCommentText = $" ; {labelComment}";
 
             string s = $"{labelName} = {offsetStr}{finalCommentText}";
             return string.Format("{0," + (length * -1) + "}", s);

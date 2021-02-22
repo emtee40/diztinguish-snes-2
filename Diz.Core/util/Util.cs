@@ -15,7 +15,7 @@ namespace Diz.Core.util
     {
         public enum NumberBase
         {
-            Decimal = 3, Hexadecimal = 2, Binary = 8
+            Decimal = 1, Hexadecimal = 2, Binary = 8, Color = 6
         }
         public static string Truncate(this string value, int maxLength)
         {
@@ -29,20 +29,17 @@ namespace Diz.Core.util
             switch (noBase)
             {
                 case NumberBase.Decimal:
-                    return digits == 0 ? v.ToString("D") : v.ToString("D" + digits);
+                    return Convert.ToString(v).PadLeft(digits, '0');
                 case NumberBase.Hexadecimal:
-                    if (digits == 0) return v.ToString("X");
-                    return (showPrefix ? "$" : "") + v.ToString("X" + digits);
-                case NumberBase.Binary:
-                    var b = "";
-                    var i = 0;
-                    while (digits == 0 ? v > 0 : i < digits)
+                case NumberBase.Color:
+                    if (noBase == NumberBase.Color)
                     {
-                        b += (v & 1);
-                        v >>= 1;
-                        i++;
+                        Color color = ColorRGB555(v);
+                        return $"rgb555({color.R},{color.G},{color.B})";
                     }
-                    return (showPrefix ? "%" : "") + b;
+                    return (showPrefix ? "$" : "") + Convert.ToString(v, 16).PadLeft(digits, '0').ToUpper();
+                case NumberBase.Binary:
+                    return (showPrefix ? "%" : "") + Convert.ToString(v, 2).PadLeft(digits, '0');
             }
             return "";
         }
@@ -202,6 +199,22 @@ namespace Diz.Core.util
             CachedRomFlagColors[romFlag] = color;
 
             return color;
+        }
+
+        public static Color ColorRGB555(int rgb555)
+        {
+            return Color.FromArgb(((rgb555 & 0x7C00) >> 10) << 3, ((rgb555 & 0x3E0) >> 5) << 3, (rgb555 & 0x1F) << 3);
+        }
+        public static int RGB555Color(Color color)
+        {
+            return (color.R << 10) | (color.G << 5) | color.B;
+        }
+        public static int PerceivedBrightness(Color c)
+        {
+            return (int)Math.Sqrt(
+            c.R * c.R * .241 +
+            c.G * c.G * .691 +
+            c.B * c.B * .068);
         }
     }
 }

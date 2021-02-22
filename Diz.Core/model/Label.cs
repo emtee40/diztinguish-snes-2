@@ -14,7 +14,7 @@
 
     public class Label
     {
-        public int Address = 0;
+        public int Parent = -1;
         public string Name = "";        // name of the label
         public string Comment = "";     // user-generated text, comment only
         public void CleanUp()

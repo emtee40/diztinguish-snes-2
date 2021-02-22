@@ -4,18 +4,6 @@ namespace DiztinGUIsh.window
 {
     public partial class MainWindow
     {
-        private int FindIntermediateAddress(int offset)
-        {
-            if (!RomDataPresent())
-                return -1;
-
-            var ia = Project.Data.GetIntermediateAddressOrPointer(offset);
-            if (ia < 0)
-                return -1;
-
-            return Project.Data.ConvertSnesToPc(ia);
-        }
-
         private bool FindUnreached(int offset, bool end, bool direction, out int unreached)
         {
             var size = Project.Data.GetRomSize();

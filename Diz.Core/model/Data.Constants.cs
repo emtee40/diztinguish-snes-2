@@ -70,6 +70,15 @@ namespace Diz.Core.model
             [Description("SuperFX")] GpuSuperFx = 0x02
         }
 
+        public enum ConstantType : byte
+        {
+            Hexadecimal = 0x00,
+            Decimal = 0x01,
+            Binary = 0x02,
+            Text = 0x04,
+            Color = 0x08
+        }
+
         [Flags]
         public enum InOutPoint : byte
         {
@@ -78,7 +87,7 @@ namespace Diz.Core.model
             EndPoint = 0x04,
             ReadPoint = 0x08
         }
-        
+
         public const int LoromSettingOffset = 0x7FD5;
         public const int HiromSettingOffset = 0xFFD5;
         public const int ExhiromSettingOffset = 0x40FFD5;

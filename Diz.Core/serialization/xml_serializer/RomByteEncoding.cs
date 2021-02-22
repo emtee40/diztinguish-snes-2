@@ -41,7 +41,7 @@ namespace Diz.Core.serialization.xml_serializer
 
         private readonly StringBuilder cachedPadSb = new StringBuilder(LineMaxLen);
 
-        private const int LineMaxLen = 21;
+        private const int LineMaxLen = 22;
 
         // note: performance-intensive function. be really careful when adding stuff here.
         public RomByte DecodeRomByte(string line)
@@ -57,6 +57,7 @@ namespace Diz.Core.serialization.xml_serializer
             newByte.Arch = (Data.Architecture)(ByteUtil.ByteParseHex1(input[8]) & 0x3);
             newByte.BaseAddr = (int)ByteUtil.ByteParseHex6(input[9], input[10], input[11], input[12], input[13], input[14]);
             newByte.IndirectAddr = (int)ByteUtil.ByteParseHex6(input[15], input[16], input[17], input[18], input[19], input[20]);
+            newByte.TypeConstant = (Data.ConstantType)(ByteUtil.ByteParseHex1(input[21]));
 
 #if EXTRA_DEBUG_CHECKS
             Debug.Assert(Fake64Encoding.EncodeHackyBase64(otherFlags1) == o1_str);
@@ -86,9 +87,9 @@ namespace Diz.Core.serialization.xml_serializer
         private StringBuilder PrepLine(string line)
         {
             if (cachedPadSb.Length == 0)
-                cachedPadSb.Append("000000000000000000000"); // any 21 chars
+                cachedPadSb.Append("0000000000000000000000"); // any 22 chars
 
-            // light decompression. ensure our line is always 21 chars long.
+            // light decompression. ensure our line is always 22 chars long.
             // if any characters are missing, pad them with zeroes
             //
             // perf: string.PadRight() is simpler but too slow, so do it by hand
@@ -155,7 +156,7 @@ namespace Diz.Core.serialization.xml_serializer
             var o2Str = otherFlags2.ToString("X1"); Debug.Assert(o2Str.Length == 1);
 
             // ordering: put DB and D on the end, they're likely to be zero and compressible
-            var sb = new StringBuilder(21);
+            var sb = new StringBuilder(22);
             sb.Append(flagTxt);
             sb.Append(o1Str);
             sb.Append(instance.DataBank.ToString("X2"));
@@ -163,8 +164,9 @@ namespace Diz.Core.serialization.xml_serializer
             sb.Append(o2Str);
             sb.Append(instance.BaseAddr.ToString("X6"));
             sb.Append(instance.IndirectAddr.ToString("X6"));
+            sb.Append(((byte) instance.TypeConstant).ToString("X1"));
 
-            //Debug.Assert(sb.Length == 21);
+            //Debug.Assert(sb.Length == 22);
             var data = sb.ToString();
 
             // light compression: chop off any trailing zeroes.

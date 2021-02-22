@@ -64,7 +64,7 @@ namespace DiztinGUIsh.window
             
             ProjectController.MarkChanged();
             SelectOffset(Project.Data.Step(offset, false, false, offset - 1));
-            UpdateUI_Tmp3();
+            UpdateUI();
         }
 
         private void StepIn(int offset)
@@ -74,7 +74,7 @@ namespace DiztinGUIsh.window
             
             ProjectController.MarkChanged();
             SelectOffset(Project.Data.Step(offset, true, false, historyView.SelectedNode != null ? (int) historyView.SelectedNode.Tag : offset - 1));
-            UpdateUI_Tmp3();
+            UpdateUI();
         }
 
         private void AutoStepSafe(int offset)
@@ -87,7 +87,7 @@ namespace DiztinGUIsh.window
             if (moveWithStep) 
                 SelectOffset(destination);
             
-            UpdateUI_Tmp3();
+            UpdateUI();
         }
 
         private void AutoStepHarsh(int offset)
@@ -104,7 +104,7 @@ namespace DiztinGUIsh.window
             if (moveWithStep) 
                 SelectOffset(destination);
 
-            UpdateUI_Tmp3();
+            UpdateUI();
         }
 
         private void Mark(int offset, bool select = true)
@@ -117,7 +117,7 @@ namespace DiztinGUIsh.window
 
             if (select) SelectOffset(newOffset);
 
-            UpdateUI_Tmp3();
+            UpdateUI();
         }
 
         private void MarkMany(int offset, string column)
@@ -131,7 +131,7 @@ namespace DiztinGUIsh.window
 
             MarkMany(mark.Property, mark.Start, mark.Value, mark.Count, mark.UnreachedOnly);
 
-            UpdateSomeUI2();
+            UpdateUI();
         }
 
         private void MarkMany(int markProperty, int markStart, object markValue, int markCount, bool markUnreachedOnly = false)
@@ -154,13 +154,16 @@ namespace DiztinGUIsh.window
                 SelectOffset(destination);
         }
 
-        private void GoToIntermediateAddress(int offset)
+        private void GoToIntermediateAddress(int offset, bool original = false)
         {
-            var snesOffset = FindIntermediateAddress(offset);
-            if (snesOffset == -1)
+            if (!RomDataPresent())
                 return;
 
-            SelectOffset(snesOffset, 1);
+            var ia = Project.Data.GetIntermediateAddressOrPointer(offset, original);
+            if (ia < 0)
+                return;
+
+            SelectOffset(Project.Data.ConvertSnesToPc(ia), 1);
         }
 
         private void GoTo(int offset)
@@ -221,8 +224,14 @@ namespace DiztinGUIsh.window
             markFlag = flagType;
             UpdateMarkerLabel();
             if (autoMarkToolStripMenuItem.Checked)
+                for (int i = 0; i < table.SelectedCells.Count; i++)
+                    Mark(table.SelectedCells[i].RowIndex + ViewOffset, i + 1 == table.SelectedCells.Count);
+        }
+        private void SetConstantType(Data.ConstantType constType)
+        {
             for (int i = 0; i < table.SelectedCells.Count; i++)
-                Mark(table.SelectedCells[i].RowIndex + ViewOffset, i + 1 == table.SelectedCells.Count);
+                Project.Data.SetConstantType(table.SelectedCells[i].RowIndex + ViewOffset, constType);
+            UpdateUI();
         }
 
         private void SaveSettings()

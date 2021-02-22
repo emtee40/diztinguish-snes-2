@@ -1,6 +1,7 @@
 ﻿using Diz.Core.model;
 using Diz.Core.util;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text.RegularExpressions;
 
 namespace Diz.Core.arch
@@ -42,6 +43,11 @@ namespace Diz.Core.arch
             {
                 prevX = (data.GetRomByte(offset + 1) & 0x10) != 0 ? opcode == 0xE2 : prevX;
                 prevM = (data.GetRomByte(offset + 1) & 0x20) != 0 ? opcode == 0xE2 : prevM;
+            }
+
+            if (opcode == 0x5B) // TCD
+            {
+                prevDirectPage = data.GetAddressMode(prevOffset) == AddressMode.Immediate16 ? data.GetRomWord(prevOffset + 1) : prevDirectPage;
             }
 
             // set first byte first, so the instruction length is correct
@@ -86,7 +92,7 @@ namespace Diz.Core.arch
                 return nextOffset;
 
             var iaNextOffsetPc = data.ConvertSnesToPc(GetIntermediateAddress(offset, true));
-            if (iaNextOffsetPc >= 0)
+            if (force || (branch && iaNextOffsetPc >= 0 && iaNextOffsetPc < data.GetRomSize()))
             {
                 if (opcode == 0x20 || opcode == 0x22 || opcode == 0xFC)
                     stack.Push(offset);
@@ -168,8 +174,8 @@ namespace Diz.Core.arch
                     addr = (bank << 16) | ((pc + addr) & 0xFFFF);
                     break;
                 case AddressMode.Immediate16:
-                    //case AddressMode.Immediate8:
-                    //case AddressMode.Constant8:
+                case AddressMode.Immediate8:
+                case AddressMode.Constant8:
                     if(iaddr > 0)
                         addr = mode == AddressMode.Immediate16 ? (short)data.GetRomWord(offset + 1) : (sbyte)data.GetRomByte(offset + 1);
                     break;
@@ -180,13 +186,15 @@ namespace Diz.Core.arch
             if (iaddr > 0)
             {
                 pc = data.ConvertSnesToPc(iaddr);
-                if (baddr == 0 && pc >= 0 && pc < data.GetRomSize() && (baddr = data.GetBaseAddr(pc)) > 0 && addr >= baddr && baddr == data.GetBaseAddr(pc + (addr - baddr))){
-                    return data.ConvertPCtoSnes(pc + (addr - baddr));
+                int pc_end = -1;
+                if (data.GetFlag(offset) != Data.FlagType.Operand)
+                if (baddr == 0 && pc >= 0 && pc < data.GetRomSize() && (baddr = data.GetBaseAddr(pc)) > 0 && addr >= baddr && (pc_end = pc + (addr - baddr)) < data.GetRomSize() && baddr == data.GetBaseAddr(pc_end)){
+                    return data.ConvertPCtoSnes(pc_end);
                 }
                 return iaddr;
             }
 
-            int last_baddr = offset > 0 ? data.GetBaseAddr(offset - 1) : -1, next_baddr = offset < data.GetRomSize() ? data.GetBaseAddr(offset + 1) : -1;
+            int last_baddr = offset > 0 ? data.GetBaseAddr(offset - 1) : -1, next_baddr = offset + 1 < data.GetRomSize() ? data.GetBaseAddr(offset + 1) : -1;
             if(baddr > 0 && (last_baddr == baddr || next_baddr == baddr))
             {
                 pc = data.CalculateBaseAddr(offset) - baddr;
@@ -194,43 +202,6 @@ namespace Diz.Core.arch
                 if (pc >= 0 && pc < data.GetRomSize() && data.GetBaseAddr(pc) == baddr)
                     return data.ConvertPCtoSnes(pc);
             }
-            
-            /*if (baddr > 0 && ((data.ConvertSnesToPc(baddr) >= 0 && data.ConvertSnesToPc(addr) < 0)))// && data.GetFlag(offset) != Data.FlagType.Operand)
-            {
-                pc = data.ConvertSnesToPc(baddr);
-                if (pc >= 0 && pc < data.GetRomSize())
-                    return addr >= data.GetBaseAddr(pc) ? data.ConvertPCtoSnes(addr - data.GetBaseAddr(pc) + pc) : baddr;
-                // 3d10 >= 3d00 : 3d10 - 3d00 + 10010
-
-                pc = data.CalculateBaseAddr(offset) - baddr;
-                if (pc < 0)
-                    return addr;
-
-                // 10020 - (3d10 - 3d00) = 10010
-                pc = (offset - pc) + (addr - baddr);
-                if (pc >= 0 && pc < data.GetRomSize() && data.GetBaseAddr(pc) == baddr)
-                    return data.ConvertPCtoSnes(pc);
-                addr = -1;
-            }
-            else if (baddr > 0 && (last_baddr == baddr || next_baddr == baddr) && baddr <= addr && (mode != AddressMode.Immediate16 && mode != AddressMode.Immediate8))
-            {
-                pc = data.CalculateBaseAddr(offset) - baddr;
-                pc = (offset - pc) + (addr - baddr);
-                if (pc >= 0 && pc < data.GetRomSize() && data.GetBaseAddr(pc) == baddr)
-                    return data.ConvertPCtoSnes(pc);
-            }
-            else if ((last_baddr != baddr && next_baddr != baddr) && (mode == AddressMode.Immediate16 || mode == AddressMode.Immediate8))
-            {
-                return baddr > 0 ? baddr : -1;
-            }
-            else if(mode == AddressMode.Immediate16 || mode == AddressMode.Immediate8)
-            {
-                addr = -1;
-            }
-            else if(baddr > 0 && (last_baddr != baddr && next_baddr != baddr) && data.GetFlag(offset) == Data.FlagType.Operand)
-            {
-                addr = baddr;
-            }*/
 
             return addr;
         }
@@ -244,7 +215,7 @@ namespace Diz.Core.arch
             if (lowercase) mnemonic = mnemonic.ToLower();
             string op1 = "", op2 = "";
 
-            if (mode == AddressMode.Immediate16) //mode == AddressMode.Constant8 || AddressMode.Immediate8)
+            if (mode == AddressMode.Immediate16 || mode == AddressMode.Constant8 || mode == AddressMode.Immediate8)
             {
                 if (data.GetBaseAddr(offset) > 0 || data.GetIndirectAddr(offset) > 0)
                     op1 = FormatOperandAddress(offset, mode);
@@ -286,16 +257,32 @@ namespace Diz.Core.arch
                 if (data.GetIndirectAddr(offset + 2) > 0)
                     op2 = data.GetLabelName(data.GetIndirectAddr(offset + 2));
 
-                op1 = op1 == "" ? Util.NumberToBaseString(data.GetRomByte(offset + 1), Util.NumberBase.Hexadecimal, 2, true) : $"{op1}>>16";
-                op2 = op2 == "" ? Util.NumberToBaseString(data.GetRomByte(offset + 2), Util.NumberBase.Hexadecimal, 2, true) : $"{op2}>>16";
+                op1 = op1 == "" ? Util.NumberToBaseString(data.GetRomByte(offset + 1), Util.NumberBase.Hexadecimal, 2, true) : $"<:{op1}";
+                op2 = op2 == "" ? Util.NumberToBaseString(data.GetRomByte(offset + 2), Util.NumberBase.Hexadecimal, 2, true) : $"<:{op2}";
             }
             else if (mode == AddressMode.Constant8 || mode == AddressMode.Immediate8)
             {
-                op1 = Util.NumberToBaseString(data.GetRomByte(offset + 1), Util.NumberBase.Hexadecimal, 2, true);
+                int operand = data.GetRomByte(offset + 1);
+                op1 = data.GetConstantType(offset) switch
+                {
+                    Data.ConstantType.Text => $"'{(char)operand}'",
+                    Data.ConstantType.Decimal => Util.NumberToBaseString(operand, Util.NumberBase.Decimal, 1, true),
+                    Data.ConstantType.Binary => Util.NumberToBaseString(operand, Util.NumberBase.Binary, 8, true),
+                    _ => Util.NumberToBaseString(operand, Util.NumberBase.Hexadecimal, 2, true)
+                };
+
             }
             else if (mode == AddressMode.Immediate16)
             {
-                op1 = Util.NumberToBaseString(data.GetRomWord(offset + 1), Util.NumberBase.Hexadecimal, 4, true);
+                int operand = data.GetRomWord(offset + 1); Color color = Util.ColorRGB555(operand);
+                op1 = data.GetConstantType(offset) switch
+                {
+                    Data.ConstantType.Color => $"rgb555({color.R},{color.G},{color.B})",
+                    Data.ConstantType.Text => $"'{(char)data.GetRomByte(offset + 1)}{(char)data.GetRomByte(offset + 2)}'",
+                    Data.ConstantType.Decimal => Util.NumberToBaseString(operand, Util.NumberBase.Decimal, 1, true),
+                    Data.ConstantType.Binary => Util.NumberToBaseString(operand, Util.NumberBase.Binary, 16, true),
+                    _ => Util.NumberToBaseString(operand, Util.NumberBase.Hexadecimal, 4, true)
+                };
             }
             else
             {
@@ -307,20 +294,20 @@ namespace Diz.Core.arch
 
 
             if (offset == 0 || data.GetFlag(offset - 1) != flag || data.GetLabelName(data.ConvertPCtoSnes(offset)) != "" ||
-                flag == Data.FlagType.Pointer16Bit || flag == Data.FlagType.Pointer24Bit || flag == Data.FlagType.Pointer32Bit ||
+                (flag != Data.FlagType.Opcode && (data.GetInOutPoint(offset) & Data.InOutPoint.ReadPoint) == Data.InOutPoint.ReadPoint) ||
                 flag == Data.FlagType.Graphics || flag == Data.FlagType.Music || flag == Data.FlagType.Binary || flag == Data.FlagType.Empty
             )
             {
                 switch (flag)
                 {
                     case Data.FlagType.Data8Bit:
-                        return data.GetFormattedBytes(offset, 1, 0);
+                        return data.GetFormattedBytes(offset, 1, 1);
                     case Data.FlagType.Data16Bit:
-                        return data.GetFormattedBytes(offset, 2, 0);
+                        return data.GetFormattedBytes(offset, 2, 1);
                     case Data.FlagType.Data24Bit:
-                        return data.GetFormattedBytes(offset, 3, 0);
+                        return data.GetFormattedBytes(offset, 3, 1);
                     case Data.FlagType.Data32Bit:
-                        return data.GetFormattedBytes(offset, 4, 0);
+                        return data.GetFormattedBytes(offset, 4, 1);
                     case Data.FlagType.Pointer16Bit:
                         return data.GetPointer(offset, 2);
                     case Data.FlagType.Pointer24Bit:
@@ -386,13 +373,22 @@ namespace Diz.Core.arch
 
         public void MarkInOutPoints(int offset)
         {
-            int opcode = data.GetRomByte(offset);
-            int iaOffsetPc = data.ConvertSnesToPc(data.GetIntermediateAddress(offset, true));
+            Data.FlagType flag = data.GetFlag(offset);
+            int opcode = flag == Data.FlagType.Opcode ? data.GetRomByte(offset) : 0x00;
+            int iaOffsetPc = data.ConvertSnesToPc(data.GetIntermediateAddressOrPointer(offset));
+
+            if (flag == Data.FlagType.Pointer16Bit)
+            {
+                data.SetInOutPoint(offset, iaOffsetPc < 0 ? Data.InOutPoint.EndPoint : Data.InOutPoint.ReadPoint);
+                if(iaOffsetPc >= 0)
+                    data.SetInOutPoint(iaOffsetPc, data.GetFlag(iaOffsetPc) == Data.FlagType.Opcode ? Data.InOutPoint.InPoint : Data.InOutPoint.ReadPoint);
+                return;
+            }
 
             // set read point on EA
             if (iaOffsetPc >= 0 && ( // these are all read/write/math instructions
                 ((opcode & 0x04) != 0) || ((opcode & 0x0F) == 0x01) || ((opcode & 0x0F) == 0x03) ||
-                ((opcode & 0x1F) == 0x12) || ((opcode & 0x1F) == 0x19)) &&
+                ((opcode & 0x1F) == 0x12) || ((opcode & 0x1F) == 0x19) || opcode == 0xA9 || opcode == 0xA2 || opcode == 0xA0) &&
                 (opcode != 0x45) && (opcode != 0x55) && (opcode != 0xF5) && (opcode != 0x4C) &&
                 (opcode != 0x5C) && (opcode != 0x6C) && (opcode != 0x7C) && (opcode != 0xDC) && (opcode != 0xFC)
             ) data.SetInOutPoint(iaOffsetPc, Data.InOutPoint.ReadPoint);
@@ -428,6 +424,13 @@ namespace Diz.Core.arch
             //address = data.GetIndirectAddr(offset) == 0 && ram_address < 0x8000 && mode != AddressMode.Long && mode != AddressMode.LongXIndex ? ram_address : address;
 
             var label = data.GetParentLabel(offset, address);
+            int ram_address = (address & 0xffff);
+            if (label == "" && ram_address < 0x8000 && mode != AddressMode.Long && mode != AddressMode.LongXIndex)
+            {
+                address = ram_address;
+                label = data.GetLabelName(address);
+            }
+
 
             int pcaddress = data.ConvertSnesToPc(address);
             if ((mode == AddressMode.AddressXIndex || mode == AddressMode.AddressYIndex) && pcaddress >= 0 && pcaddress < data.GetRomSize() && data.GetBaseAddr(pcaddress) > 0)
@@ -438,9 +441,14 @@ namespace Diz.Core.arch
                 count = data.GetIntermediateAddress(offset, true, true) - address;
                 if (data.GetIndirectAddr(offset) > 0 && count > 0)// && count < 0xFF)// && data.GetLabelName(operand) == "")
                 {
-                    label += "+" + Util.NumberToBaseString(count, Util.NumberBase.Hexadecimal, 2, true);
+                    label += "+";
+                    label += data.GetConstantType(offset) switch
+                    {
+                        Data.ConstantType.Decimal => Util.NumberToBaseString(count, Util.NumberBase.Decimal, 1, false),
+                        _ => Util.NumberToBaseString(count, Util.NumberBase.Hexadecimal, 2, true)
+                    };
                 }
-                return label;
+                return (mode == AddressMode.Constant8 || mode == AddressMode.Immediate8 ? "<:" : "") + label;
             }
 
 
@@ -553,7 +561,20 @@ namespace Diz.Core.arch
             return "";
         }
 
-        private AddressMode GetAddressMode(int offset)
+        public string GetRegisterLabel(int snes)
+        {
+            if (Registers.TryGetValue(snes, out var val))
+                return val?.Name ?? "";
+            return "";
+        }
+        public string GetRegisterComment(int snes)
+        {
+            if (Registers.TryGetValue(snes, out var val))
+                return val?.Comment ?? "";
+            return "";
+        }
+
+        public AddressMode GetAddressMode(int offset)
         {
             var mode = AddressingModes[data.GetRomByte(offset)];
             return mode switch
@@ -676,7 +697,7 @@ namespace Diz.Core.arch
             AddressMode.AddressXIndexIndirect, AddressMode.AddressXIndex, AddressMode.AddressXIndex, AddressMode.LongXIndex,
         };
 
-        private static readonly Dictionary<int, Label> Registers = new Dictionary<int, Label> {
+        public static readonly SortedDictionary<int, Label> Registers = new SortedDictionary<int, Label> {
             { 0x2100, new Label() { Name = "INIDISP", Comment = "Display Control 1" } },
             { 0x2101, new Label() { Name = "OBJSEL", Comment = "Object Size & Object Base" } },
             { 0x2102, new Label() { Name = "OAMADDL", Comment = "OAM Address; lower byte" } },

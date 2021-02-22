@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.VisualBasic;
 using System.Drawing;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Diz.Core.model;
 using Diz.Core.util;
+using Label = Diz.Core.model.Label;
 
 namespace DiztinGUIsh.window
 {
@@ -15,8 +17,8 @@ namespace DiztinGUIsh.window
     {
         // Data offset of the selected row
         public int SelectedOffset => table.CurrentCell != null ? SelectedRow + ViewOffset : ViewOffset;
-        public int SelectedColumn => table.CurrentCell != null ? table.CurrentCell.ColumnIndex : ViewOffset;
-        public int SelectedRow => table.CurrentCell != null ? table.CurrentCell.RowIndex : ViewOffset;
+        public int SelectedColumn => table.CurrentCell != null ? table.CurrentCell.ColumnIndex : -1;
+        public int SelectedRow => table.CurrentCell != null ? table.CurrentCell.RowIndex : 0;
 
         private int rowsToShow;
         private int LastOffset = 0;
@@ -62,26 +64,25 @@ namespace DiztinGUIsh.window
             InvalidateTable();
         }
 
-        private void table_MouseUp(object sender, MouseEventArgs e)
+        private void table_MouseDown(object sender, MouseEventArgs e)
         {
-            LastOffset = SelectedOffset;
-            LastColumn = SelectedColumn;
-            if(e.Button != MouseButtons.Right)
+            if (e.Button != MouseButtons.Right && LastOffset != SelectedOffset)
                 ShowReferences(SelectedOffset);
+            SelectOffset(SelectedOffset, SelectedColumn, false);
 
             InvalidateTable();
         }
 
         private void table_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Project?.Data == null || Project.Data.GetRomSize() <= 0) return;
+            e.Handled = true;
+            if (Project?.Data == null || Project.Data.GetRomSize() <= 0 || table.IsCurrentCellInEditMode) return;
 
             var offset = LastOffset;
             var newOffset = offset;
             var amount = 1;
             TreeNode tn;
 
-            e.Handled = true;
             //SelectOffset(offset, -1, false);
             switch (e.KeyCode)
             {
@@ -95,8 +96,15 @@ namespace DiztinGUIsh.window
                 case Keys.Down:
                     amount = (e.KeyCode == Keys.PageUp || e.KeyCode == Keys.PageDown) ? (e.Alt ? 0x1000 : e.Shift ? 0x8000 : rowsToShow) : 1;
                     if (e.KeyCode == Keys.Up || e.KeyCode == Keys.PageUp) amount *= -1;
-                    SelectOffset(offset + amount, -1, false);
-                   break;
+                    if (e.Control)
+                    {
+                        ScrollTableBy(amount * -0x18);
+                    }
+                    else
+                    {
+                        SelectOffset(offset + amount, -1, false);
+                    }
+                    break;
                 case Keys.Left:
                 case Keys.Right:
                     amount = LastColumn + (e.KeyCode == Keys.Right ? 1 : -1);
@@ -111,6 +119,13 @@ namespace DiztinGUIsh.window
                         Mark(table.SelectedCells[i].RowIndex + ViewOffset, i + 1 == table.SelectedCells.Count);
                     break;
                 case Keys.L:
+                    int ia = Project.Data.GetIntermediateAddressOrPointer(offset, e.Shift);
+
+                    if (e.Control && ia >= 0)
+                    {
+                        string label = Interaction.InputBox("Type the label name you want for the address " + Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6, true), "Add/Update Label", Project.Data.GetLabelName(ia));
+                        Project.Data.AddLabel(ia, new Label() { Name = Regex.IsMatch(label, ".?[a-zA-Z0-9_]+|[\\+\\-]+") ? label : "" }, true);
+                    }
                     table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("label")];
                     table.BeginEdit(true);
                     break;
@@ -141,9 +156,10 @@ namespace DiztinGUIsh.window
                 case Keys.Subtract:
                 case Keys.Oemplus:
                 case Keys.Add:
+                    if (e.Shift) { historyView.Nodes.Clear(); break; }
                     if (historyView.SelectedNode == null) break;
                     tn = e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract ? historyView.SelectedNode.PrevNode : historyView.SelectedNode.NextNode;
-                    if (e.Alt) tn = e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract ? historyView.SelectedNode.FirstNode : historyView.SelectedNode.LastNode;
+                    if (e.Alt) tn = e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract ? historyView.Nodes[0] : historyView.Nodes[historyView.Nodes.Count-1];
                     if (tn != null) {
                         SelectOffset((int) tn.Tag, -1, false);
                         historyView.SelectedNode = tn;
@@ -156,6 +172,9 @@ namespace DiztinGUIsh.window
                     LastOffset = SelectedOffset+1;
                     e.Handled = false;
                     break;
+                case Keys.F9:
+                    GoToIntermediateAddress(LastOffset, e.Control);
+                    break;
                 default:
                     e.Handled = false;
                     break;
@@ -166,13 +185,18 @@ namespace DiztinGUIsh.window
 
         private void table_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
         {
-            var row = e.RowIndex + ViewOffset;
+            int row = e.RowIndex + ViewOffset, snes = Project.Data.ConvertPCtoSnes(row);
             if (row >= Project.Data.GetRomSize()) return;
             bool editing = table.IsCurrentCellInEditMode && e.ColumnIndex == SelectedColumn, samerow = row == SelectedOffset;
+            int ia = Project.Data.GetIntermediateAddressOrPointer(row, true);
             switch (ColumnName(e.ColumnIndex))
             {
                 case "label":
-                    e.Value = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(row));
+                    var label = Project.Data.GetLabelName(snes);
+                    if (label == "" && (Project.Data.GetInOutPoint(row) & Data.InOutPoint.InPoint) == Data.InOutPoint.InPoint)
+                        label = Project.Data.GetLabelName(snes, true);
+
+                    e.Value = label;
                     break;
                 case "pc":                    
                     e.Value = Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(row), Util.NumberBase.Hexadecimal, 6);
@@ -195,9 +219,8 @@ namespace DiztinGUIsh.window
                     e.Value = row + len <= Project.Data.GetRomSize() ? Project.Data.GetInstruction(row, true).Truncate(200) : "";
                     break;
                 case "ia":
-                    var ia = Project.Data.GetIntermediateAddressOrPointer(row, true);
-                    if (ia < 0 || (editing && samerow)) ia = Project.Data.GetIndirectAddr(row);
-                    e.Value = ia > 0 ? Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6) : "";
+                    if (Project.Data.GetIndirectAddr(row) > 0 && (ia < 0 || (editing && samerow) || samerow)) ia = Project.Data.GetIndirectAddr(row);
+                    e.Value = ia >= 0 ? Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6) : "";
                     break;
                 case "flag":
                     e.Value = Util.GetEnumDescription(Project.Data.GetFlag(row));
@@ -214,8 +237,12 @@ namespace DiztinGUIsh.window
                 case "x":
                     e.Value = RomUtil.BoolToSize(Project.Data.GetXFlag(row));
                     break;
+                case "constant":
+                    e.Value = Project.Data.GetFlag(row) != Data.FlagType.Operand ? Util.GetEnumDescription(Project.Data.GetConstantType(row)).Truncate(1) : "-";
+                    break;
                 case "comment":
                     e.Value = Project.Data.GetComment(Project.Data.ConvertPCtoSnes(row));
+                    if (e.Value == "" && ia >= 0 && Project.Data.GetComment(ia) != "" && ((!editing && !samerow) || !samerow)) e.Value = Project.Data.GetComment(ia);
                     break;
             }
         }
@@ -241,13 +268,23 @@ namespace DiztinGUIsh.window
                     Project.Data.SetBaseAddr(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
                     break;
                 case "ia":
-                    Project.Data.SetIndirectAddr(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) ? result : 0);
+                    Project.Data.SetIndirectAddr(row, int.TryParse(value, NumberStyles.HexNumber, null, out result) && result != Project.Data.GetIntermediateAddressOrPointer(row, true) ? result : 0);
                     break;
                 case "m":
                     Project.Data.SetMFlag(row, (value == "8" || value.ToUpper() == "M"));
                     break;
                 case "x":
                     Project.Data.SetXFlag(row, (value == "8" || value.ToUpper() == "X"));
+                    break;
+                case "constant":
+                    Data.ConstantType ctype = value.ToUpper() switch
+                    {
+                        "D" => Data.ConstantType.Decimal,
+                        "B" => Data.ConstantType.Binary,
+                        "T" => Data.ConstantType.Text,
+                        _ => Data.ConstantType.Hexadecimal
+                    };
+                    Project.Data.SetConstantType(row, ctype);
                     break;
                 case "comment":
                     Project.Data.AddComment(Project.Data.ConvertPCtoSnes(row), value, true);
@@ -261,10 +298,13 @@ namespace DiztinGUIsh.window
         {
             // editable cells show up green
             string column = ColumnName(column_index);
-            if (column == "label" || column == "base" || column == "db" || column == "dp" || column == "comment") style.SelectionBackColor = Color.Chartreuse;
+            if (column == "label" || column == "base" || column == "db" || column == "dp" || column == "ia" || column == "comment") style.SelectionBackColor = Color.Chartreuse;
 
             bool diff = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(offset)) == "" && (offset > 0 && Project.Data.GetFlag(offset - 1) == Project.Data.GetFlag(offset));
-            switch (Project.Data.GetFlag(offset))
+            Data.InOutPoint point = Project.Data.GetInOutPoint(offset);
+            Data.FlagType flag = Project.Data.GetFlag(offset);
+            Data.ConstantType constant = Project.Data.GetConstantType(offset);
+            switch (flag)
             {
                 case Data.FlagType.Unreached:
                     style.BackColor = Color.LightGray;
@@ -275,7 +315,6 @@ namespace DiztinGUIsh.window
                     switch (column)
                     {
                         case "points":
-                            Data.InOutPoint point = Project.Data.GetInOutPoint(offset);
                             int r = 255, g = 255, b = 255;
                             if ((point & (Data.InOutPoint.EndPoint | Data.InOutPoint.OutPoint)) != 0) g -= 50;
                             if ((point & (Data.InOutPoint.InPoint)) != 0) r -= 50;
@@ -286,6 +325,11 @@ namespace DiztinGUIsh.window
                             if (opcode == 0x40 || opcode == 0xCB || opcode == 0xDB || opcode == 0xF8 // RTI WAI STP SED
                                 || opcode == 0xFB || opcode == 0x00 || opcode == 0x02 || opcode == 0x42 // XCE BRK COP WDM
                             ) style.BackColor = Color.Yellow;
+                            if (constant != Data.ConstantType.Hexadecimal)
+                            {
+                                style.BackColor = Color.FromArgb(50 - (int)constant, 100 - (int)constant, 255 - ((int)constant * 20));
+                                style.ForeColor = Color.White;
+                            }
                             break;
                         case "db":
                             if (opcode == 0xAB || opcode == 0x44 || opcode == 0x54) // PLB MVP MVN
@@ -309,8 +353,15 @@ namespace DiztinGUIsh.window
                                 style.BackColor = Color.Yellow;
                             break;
                     }
-                    if (opcode == 0x60 || opcode == 0x6B) // RTS RTL
-                        style.BackColor = Color.LightGreen;
+                    switch (opcode)
+                    {
+                        case 0x4C: case 0x5C: case 0x6C: case 0x7C: case 0xDC:
+                            style.BackColor = Color.WhiteSmoke;
+                            break;
+                        case 0x60: case 0x6B:
+                            style.BackColor = Color.LightGreen;
+                            break;
+                    }
                     break;
                 case Data.FlagType.Operand:
                     style.ForeColor = Color.LightGray;
@@ -326,13 +377,20 @@ namespace DiztinGUIsh.window
                 case Data.FlagType.Data24Bit:
                 case Data.FlagType.Data32Bit:
                     style.BackColor = Color.NavajoWhite;
-                    if (diff) style.ForeColor = Color.DarkGray;
+                    if (column == "ia" && Project.Data.GetConstantType(offset) == Data.ConstantType.Color && (point & Data.InOutPoint.ReadPoint) > 0)
+                    {
+                        if (flag == Data.FlagType.Data16Bit)
+                            style.BackColor = Util.ColorRGB555(Project.Data.GetRomWord(offset));
+                        else if (flag == Data.FlagType.Data24Bit)
+                            style.BackColor = Color.FromArgb(Project.Data.GetRomByte(offset+2), Project.Data.GetRomByte(offset+1), Project.Data.GetRomByte(offset));
+                    }
+                    if (RomUtil.GetByteLengthForFlag(flag) > 1 && (point & Data.InOutPoint.ReadPoint) == 0) style.ForeColor = Color.DarkGray;
                     break;
                 case Data.FlagType.Pointer16Bit:
                 case Data.FlagType.Pointer24Bit:
                 case Data.FlagType.Pointer32Bit:
                     style.BackColor = Color.Orchid;
-                    //if (diff) style.ForeColor = Color.LightGray;
+                    if ((point & (Data.InOutPoint.ReadPoint | Data.InOutPoint.EndPoint)) == 0) style.ForeColor = Color.DarkMagenta;
                     break;
                 case Data.FlagType.Text:
                     style.BackColor = Color.Aquamarine;
@@ -358,11 +416,24 @@ namespace DiztinGUIsh.window
 
             switch (column)
             {
+                case "label":
+                    style.ForeColor = Project.Data.GetLabelName(Project.Data.ConvertPCtoSnes(offset)) == "" ? Color.LightGray : style.ForeColor;
+                    break;
                 case "base":
                     style.ForeColor = Project.Data.GetBaseAddr(offset) > 0 /*&& Project.Data.GetFlag(offset) != Data.FlagType.Operand*/ ? Color.DarkBlue : Color.LightGray;
                     break;
                 case "ia":
                     if (Project.Data.GetIndirectAddr(offset) > 0 /*&& Project.Data.GetFlag(offset) != Data.FlagType.Operand*/) style.ForeColor = Color.Red;
+                    break;
+                case "constant":
+                    if (constant != Data.ConstantType.Hexadecimal)
+                    {
+                        style.BackColor = Color.FromArgb(50 - (int)constant, 100 - (int)constant, 255 - ((int)constant * 20));
+                        style.ForeColor = Color.White;
+                    }
+                    break;
+                case "comment":
+                    if(Project.Data.GetComment(Project.Data.ConvertPCtoSnes(offset)) == "") style.ForeColor = Color.LightGray;
                     break;
             }
 
@@ -396,9 +467,9 @@ namespace DiztinGUIsh.window
 
         public void ShowReferences(int offset, bool pc = true, bool clear = true)
         {
-            //if (offset < 0) return;
 
-            int snes = pc ? Project.Data.ConvertPCtoSnes(offset) : offset, ia = -1;
+            int snes = pc ? Project?.Data?.ConvertPCtoSnes(offset) ?? -1 : offset, ia = -1;
+            if (snes < 0) return;
             referenceView.BeginUpdate();
             if(clear) referenceView.Nodes.Clear();
 
@@ -434,6 +505,7 @@ namespace DiztinGUIsh.window
         public void SelectOffset(int offset, int column = -1, bool record = true)
         {
             if (offset < 0 || offset >= Project.Data.GetRomSize()) return;
+            currentOffset.Text = "Offset: " + Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6, true) + "/0x" + Util.NumberToBaseString(offset, Util.NumberBase.Hexadecimal, 6);
 
             if (record)
             {
@@ -484,6 +556,8 @@ namespace DiztinGUIsh.window
             table.CellPainting += new DataGridViewCellPaintingEventHandler(table_CellPainting);
             table.CellBeginEdit += new DataGridViewCellCancelEventHandler(table_CellBeginEdit);
             table.CellEndEdit += new DataGridViewCellEventHandler(table_CellEndEdit);
+            table.MouseClick += new MouseEventHandler(table_MouseDown);
+            table.KeyDown += new KeyEventHandler(table_KeyDown);
 
 
             rowsToShow = ((table.Height - table.ColumnHeadersHeight) / table.RowTemplate.Height);
@@ -500,13 +574,13 @@ namespace DiztinGUIsh.window
 
         private void BeginEditingComment()
         {
-            table.CurrentCell = table.Rows[SelectedRow].Cells[12];
+            table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("comment")];
             table.BeginEdit(true);
         }
 
         private void BeginAddingLabel()
         {
-            table.CurrentCell = table.Rows[SelectedRow].Cells[0];
+            table.CurrentCell = table.Rows[SelectedRow].Cells[ColumnIndex("label")];
             table.BeginEdit(true);
         }
     }

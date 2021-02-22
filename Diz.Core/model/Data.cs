@@ -96,6 +96,8 @@ namespace Diz.Core.model
         public int GetIndirectAddr(int i) => RomBytes[i].IndirectAddr;
         public void SetIndirectAddr(int i, int iAddr) => RomBytes[i].IndirectAddr = 0xFFFFFF & iAddr;
         public bool GetXFlag(int i) => RomBytes[i].XFlag;
+        public void SetConstantType(int i, ConstantType x) => RomBytes[i].TypeConstant = x;
+        public ConstantType GetConstantType(int i) => RomBytes[i].TypeConstant;
         public void SetXFlag(int i, bool x) => RomBytes[i].XFlag = x;
         public bool GetMFlag(int i) => RomBytes[i].MFlag;
         public void SetMFlag(int i, bool m) => RomBytes[i].MFlag = m;
@@ -110,14 +112,12 @@ namespace Diz.Core.model
             RomBytes[i].MFlag = ((mx & 0x20) != 0);
             RomBytes[i].XFlag = ((mx & 0x10) != 0);
         }
-        public KeyValuePair<int, int> GetBaseAddrOffset(int i)
-        {
-            return new KeyValuePair<int, int>(GetBaseAddr(i), ConvertSnesToPc(GetBaseAddr(i)));
-        }
         public string GetLabelName(int i, bool def = false)
         {
             if (Labels.TryGetValue(i, out var val))
                 return val?.Name ?? "";
+            if (cpu65C816.GetRegisterLabel(i & 0xFFFF) != "")
+                return cpu65C816.GetRegisterLabel(i & 0xFFFF);
 
             return def ? GetDefaultLabel(i) : "";
         }
@@ -147,7 +147,7 @@ namespace Diz.Core.model
                     // if addr was after offset and we reach our offset, quit
                     if ((address > offset && x == offset) || (address < offset && x == address)) break;
 
-                    if (GetInOutPoint(x) != InOutPoint.InPoint && GetInOutPoint(x) != InOutPoint.ReadPoint) continue;
+                    if ((GetInOutPoint(x) & InOutPoint.InPoint) != InOutPoint.InPoint) continue;
                     // found a point
 
                     // has defined label?
@@ -169,7 +169,7 @@ namespace Diz.Core.model
             if (Labels.TryGetValue(i, out var val))
                 return val?.Comment ?? "";
 
-            return "";
+            return cpu65C816.GetRegisterComment(i & 0xFFFF);
         }
 
         public void DeleteAllLabels()
@@ -180,7 +180,7 @@ namespace Diz.Core.model
         public void AddLabel(int offset, Label label, bool overwrite)
         {
             // adding null label removes it
-            if (label == null)
+            if (label == null || (label.Name == "" && label.Comment == ""))
             {
                 if (Labels.ContainsKey(offset))
                     Labels.Remove(offset);
@@ -251,6 +251,7 @@ namespace Diz.Core.model
                 case FlagType.Unreached:
                 case FlagType.Opcode:
                 case FlagType.Operand:
+                    if (GetFlag(offset) == FlagType.Operand && GetIndirectAddr(offset) <= 0) break;
                     return GetIntermediateAddress(offset, true, original);
                 case FlagType.Pointer16Bit:
                     int bank = GetDataBank(offset);
@@ -299,12 +300,20 @@ namespace Diz.Core.model
             {
                 if (i > 0) res += ",";
 
+                Util.NumberBase type = GetConstantType(offset) switch
+                {
+                    Data.ConstantType.Decimal => Util.NumberBase.Decimal,
+                    Data.ConstantType.Binary => Util.NumberBase.Binary,
+                    Data.ConstantType.Color => Util.NumberBase.Color,
+                    _ => Util.NumberBase.Hexadecimal
+                };
+
                 switch (step)
                 {
-                    case 1: res += Util.NumberToBaseString(GetRomByte(offset + i), Util.NumberBase.Hexadecimal, 2, true); break;
-                    case 2: res += Util.NumberToBaseString(GetRomWord(offset + i), Util.NumberBase.Hexadecimal, 4, true); break;
-                    case 3: res += Util.NumberToBaseString(GetRomLong(offset + i), Util.NumberBase.Hexadecimal, 6, true); break;
-                    case 4: res += Util.NumberToBaseString(GetRomDoubleWord(offset + i), Util.NumberBase.Hexadecimal, 8, true); break;
+                    case 1: res += Util.NumberToBaseString(GetRomByte(offset + i), type, (int)type * 1, true); break;
+                    case 2: res += Util.NumberToBaseString(GetRomWord(offset + i), type, (int)type * 2, true); break;
+                    case 3: res += Util.NumberToBaseString(GetRomLong(offset + i), type, (int)type * 3, true); break;
+                    case 4: res += Util.NumberToBaseString(GetRomDoubleWord(offset + i), type, (int)type * 4, true); break;
                 }
             }
 
@@ -341,9 +350,10 @@ namespace Diz.Core.model
             }
 
             var pc = ConvertSnesToPc(ia);
-            if (pc >= 0 && GetLabelName(ia) != "") param = GetLabelName(ia);
+            if (pc >= 0 && GetLabelName(ia) != "") param = GetParentLabel(offset, ia);
             return string.Format(format, param);
         }
+
         public int GetSectionSize(int offset)
         {
             int bytes = 1;
@@ -386,18 +396,9 @@ namespace Diz.Core.model
         public string GetDefaultLabel(int snes)
         {
             var pcoffset = ConvertSnesToPc(snes);
-            var prefix = pcoffset >= 0 ? RomUtil.TypeToLabel(GetFlag(pcoffset)) : "RAM";
+            var prefix = pcoffset >= 0 && pcoffset < GetRomSize() ? RomUtil.TypeToLabel(GetFlag(pcoffset)) : "RAM";
             var labelAddress = Util.NumberToBaseString(snes, Util.NumberBase.Hexadecimal, 6);
 
-            /*if(pcoffset >= 0 && GetFlag(pcoffset) == Data.FlagType.Opcode)
-            switch (GetRomByte(pcoffset))
-            {
-                case 0x10: case 0x30: case 0x50: case 0x70: case 0x80:
-                case 0x82: case 0x90: case 0xB0: case 0xD0: case 0xF0:
-                    var operand = Util.NumberToBaseString(snes & 0xFFF, Util.NumberBase.Hexadecimal, 3);
-                    return $".b{operand}";
-                    break;
-            }*/
             return $"{prefix}_{labelAddress}";
         }
 
@@ -518,7 +519,7 @@ namespace Diz.Core.model
             for (i = 0; i < count && offset + i < size; i++) 
                 if(!unreachedonly || unreachedonly && GetFlag(offset + i) == FlagType.Unreached)
                     MarkAction(offset + i);
-            
+            RescanInOutPoints();
             return offset + i < size ? offset + i : size - 1;
         }
 
@@ -596,18 +597,29 @@ namespace Diz.Core.model
         public void RescanInOutPoints()
         {
             for (var i = 0; i < GetRomSize(); i++) ClearInOutPoint(i);
-
-            for (var i = 0; i < GetRomSize(); i++)
+            int next = 1;
+            for (var i = 0; i < GetRomSize(); i+=next)
             {
-                if (GetFlag(i) == FlagType.Opcode)
+                FlagType flag = GetFlag(i);
+                switch (flag)
                 {
-                    switch (GetArchitecture(i))
-                    {
-                        case Architecture.Cpu65C816: cpu65C816.MarkInOutPoints(i); break;
-                        case Architecture.Apuspc700: break;
-                        case Architecture.GpuSuperFx: break;
-                    }
+                    case FlagType.Opcode:
+                    case FlagType.Pointer16Bit:
+                        switch (GetArchitecture(i))
+                        {
+                            case Architecture.Cpu65C816: cpu65C816.MarkInOutPoints(i); break;
+                            case Architecture.Apuspc700: break;
+                            case Architecture.GpuSuperFx: break;
+                        }
+                        break;
                 }
+
+                next = RomUtil.GetByteLengthForFlag(flag);
+                if (next > 1)
+                {
+                    SetInOutPoint(i, InOutPoint.ReadPoint);
+                }
+
             }
         }
 
@@ -632,6 +644,10 @@ namespace Diz.Core.model
                 Architecture.GpuSuperFx => "",
                 _ => ""
             };
+        }
+        public Cpu65C816.AddressMode GetAddressMode(int offset)
+        {
+            return cpu65C816.GetAddressMode(offset);
         }
 
         public int GetNumberOfBanks()

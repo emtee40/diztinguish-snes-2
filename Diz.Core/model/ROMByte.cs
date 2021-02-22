@@ -18,6 +18,7 @@ namespace Diz.Core.model
         private Data.FlagType typeFlag = Data.FlagType.Unreached;
         private Data.Architecture arch = Data.Architecture.Cpu65C816;
         private Data.InOutPoint point = 0;
+        private Data.ConstantType typeConstant = 0;
 
         // holds the original byte from the source ROM
         public byte Rom
@@ -78,6 +79,11 @@ namespace Diz.Core.model
             get => point;
             set => SetField(ref point, value);
         }
+        public Data.ConstantType TypeConstant
+        {
+            get => typeConstant;
+            set => SetField(ref typeConstant, value);
+        }
 
         // don't serialize. cached copy of our offset in parent collection
         public int Offset { get; private set; } = -1;
@@ -98,7 +104,7 @@ namespace Diz.Core.model
 
         public bool EqualsButNoRomByte(RomByte other)
         {
-            return DataBank == other.DataBank && DirectPage == other.DirectPage && XFlag == other.XFlag && MFlag == other.MFlag && TypeFlag == other.TypeFlag && Arch == other.Arch && Point == other.Point;
+            return DataBank == other.DataBank && DirectPage == other.DirectPage && XFlag == other.XFlag && MFlag == other.MFlag && TypeFlag == other.TypeFlag && Arch == other.Arch && Point == other.Point && IndirectAddr == other.IndirectAddr && BaseAddr == other.BaseAddr && TypeConstant == other.TypeConstant;
         }
 
         public override bool Equals(object obj)
@@ -120,6 +126,9 @@ namespace Diz.Core.model
                 hashCode = (hashCode * 397) ^ (int)TypeFlag;
                 hashCode = (hashCode * 397) ^ (int)Arch;
                 hashCode = (hashCode * 397) ^ (int)Point;
+                hashCode = (hashCode * 397) ^ BaseAddr.GetHashCode();
+                hashCode = (hashCode * 397) ^ IndirectAddr.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)TypeConstant;
                 return hashCode;
             }
         }
