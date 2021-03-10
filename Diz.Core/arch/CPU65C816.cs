@@ -49,6 +49,11 @@ namespace Diz.Core.arch
             {
                 prevDirectPage = data.GetAddressMode(prevOffset) == AddressMode.Immediate16 ? data.GetRomWord(prevOffset + 1) : prevDirectPage;
             }
+            
+            if (opcode == 0x89) // BIT
+            {
+                data.SetConstantType(offset, Data.ConstantType.Binary);
+            }
 
             // set first byte first, so the instruction length is correct
             data.SetFlag(offset, Data.FlagType.Opcode);

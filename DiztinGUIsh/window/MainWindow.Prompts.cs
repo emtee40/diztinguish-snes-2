@@ -35,10 +35,10 @@ namespace DiztinGUIsh.window
         private static void ShowExportResults(LogCreator.OutputResult result)
         {
             if (result.ErrorCount > 0)
-                MessageBox.Show("Disassembly created with errors. See errors.txt for details.", "Warning",
+                MessageBox.Show("Disassembly created with errors. See errors.txt for details." + result.OutputStr, "Warning",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             else
-                MessageBox.Show("Disassembly created successfully!", "Complete", MessageBoxButtons.OK,
+                MessageBox.Show("Disassembly created successfully!" + result.OutputStr, "Complete", MessageBoxButtons.OK,
                     MessageBoxIcon.Asterisk);
         }
 

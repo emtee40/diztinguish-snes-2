@@ -48,6 +48,7 @@
             this.chooseLogFolder = new System.Windows.Forms.FolderBrowserDialog();
             this.chkLowerCaseOpcodes = new System.Windows.Forms.CheckBox();
             this.chkNewLineLabels = new System.Windows.Forms.CheckBox();
+            this.chkTestBuild = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -250,6 +251,18 @@
             this.chkNewLineLabels.UseVisualStyleBackColor = true;
             this.chkNewLineLabels.CheckedChanged += new System.EventHandler(this.chkNewLineLabels_CheckedChanged);
             // 
+            // chkTestBuild
+            // 
+            this.chkTestBuild.AutoSize = true;
+            this.chkTestBuild.Location = new System.Drawing.Point(379, 495);
+            this.chkTestBuild.Name = "chkTestBuild";
+            this.chkTestBuild.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkTestBuild.Size = new System.Drawing.Size(102, 17);
+            this.chkTestBuild.TabIndex = 17;
+            this.chkTestBuild.Text = "Test Build (asar)";
+            this.chkTestBuild.UseVisualStyleBackColor = true;
+            this.chkTestBuild.Click += new System.EventHandler(this.chkTestBuild_Click);
+            // 
             // ExportDisassembly
             // 
             this.AcceptButton = this.button2;
@@ -257,6 +270,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
             this.ClientSize = new System.Drawing.Size(611, 525);
+            this.Controls.Add(this.chkTestBuild);
             this.Controls.Add(this.chkNewLineLabels);
             this.Controls.Add(this.chkLowerCaseOpcodes);
             this.Controls.Add(this.chkIncludeUnusedLabels);
@@ -306,5 +320,6 @@
         private System.Windows.Forms.FolderBrowserDialog chooseLogFolder;
         private System.Windows.Forms.CheckBox chkLowerCaseOpcodes;
         private System.Windows.Forms.CheckBox chkNewLineLabels;
+        private System.Windows.Forms.CheckBox chkTestBuild;
     }
 }

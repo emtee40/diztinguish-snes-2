@@ -51,6 +51,7 @@ namespace DiztinGUIsh
             chkPrintLabelSpecificComments.Checked = settings.PrintLabelSpecificComments;
             chkLowerCaseOpcodes.Checked = settings.LowerCaseOpcodes;
             chkNewLineLabels.Checked = settings.NewLineLabels;
+            chkTestBuild.Checked = settings.Build;
         }
 
         private void cancel_Click(object sender, EventArgs e)
@@ -161,6 +162,11 @@ namespace DiztinGUIsh
             settings.NewLineLabels = chkNewLineLabels.Checked;
             RegenerateSampleOutput();
 
+        }
+
+        private void chkTestBuild_Click(object sender, EventArgs e)
+        {
+            settings.Build = chkTestBuild.Checked;
         }
     }
 }

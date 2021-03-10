@@ -49,6 +49,32 @@ namespace Diz.Core.export
                 Cleanup(); // critical to ALWAYS do this so we restore labels
             }
 
+            // try building it
+            if (Settings.Build)
+            {
+
+                result.OutputStr += "\n\nAsar Output:";
+                if (Asar.init())
+                {
+                    byte[] rom = new byte[Data.GetRomSize()];
+                    if (!Asar.patch(Settings.FileOrFolderOutPath + (Settings.Structure == FormatStructure.OneBankPerFile ? "/main.asm" : ""), ref rom))
+                    {
+                        Asarerror[] errors = Asar.geterrors();
+                        foreach (Asarerror error in errors)
+                        {
+                            result.OutputStr += $"\n{error.Rawerrdata}";
+                            result.ErrorCount++;
+                        }
+                    } else {
+                        result.OutputStr += " Success!";
+                    }
+                    Asar.close();
+                } else {
+                    result.OutputStr += " DLL wasn't loaded!";
+
+                }
+            }
+
             return result;
         }
 
